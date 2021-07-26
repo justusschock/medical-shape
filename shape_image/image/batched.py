@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from sklearn.decomposition import PCA
 
-from shape_fitting.data.shape_image import ShapeImage
+from shape_image.image.shape_image import ShapeImage
 
 
 class BatchedShapeImage(ShapeImage):
