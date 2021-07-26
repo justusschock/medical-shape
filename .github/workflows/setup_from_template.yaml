@@ -1,0 +1,51 @@
+name: Setup repository
+on:
+  push
+
+jobs:
+  setup:
+    name: Reinitialize repository
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Do not run scaffolding on template repository
+        shell: bash
+        # This workflow runs when the `cookiecutter.json` file is modified.
+        # This is the trick to re-init a repository, but we don't want to
+        # run this action if this file is modified in the origin template repository.
+        #
+        # Using the GitHub rest API allows us to identify if the current repository
+        # is a template repository or not.
+        run: |
+          curl --silent -X GET \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.baptiste-preview+json" \
+            https://api.github.com/repos/$GITHUB_REPOSITORY \
+            | jq --exit-status '.is_template == false';
+
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+          
+      - name: Check For Configure File
+        run: if [[ -f "configure.py" ]]; then echo '::set-output name=CONFIGURE_EXISTS::True'; else echo '::set-output name=CONFIGURE_EXISTS::False'; fi
+        id: check_config
+        
+      - name: Get color
+        run: echo "The selected color is ${{ steps.random-color-generator.outputs.SELECTED_COLOR }}"
+
+      - name: Scaffolding repository
+        if: steps.check_config.outputs.CONFIGURE_EXISTS == 'True'
+        run: python configure.py --repository ${{ github.repository }}; rm configure.py
+
+      - name: Push Changes to git repository
+        if: steps.check_config.outputs.CONFIGURE_EXISTS == 'True'
+        shell: bash
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com" && \
+          git config --global user.name "github-actions[bot]" && \
+          git add . && \
+          git commit -m 'Setup from template' && \
+          git push
