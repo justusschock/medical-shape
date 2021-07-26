@@ -24,7 +24,7 @@ from rising.transforms.functional import crop
 
 from pytorch_lightning.utilities.device_dtype_mixin import DeviceDtypeModuleMixin
 
-from shape_fitting.data.io import load_image, pts_importer
+from shape_image.io import load_image, pts_importer
 
 import json
 
@@ -123,7 +123,7 @@ class ShapeImage(DeviceDtypeModuleMixin):
             self
         """
 
-        from shape_fitting.data.normalization import _ShapeNormalization
+        from shape_image.normalization import _ShapeNormalization
         with _ShapeNormalization(self):
             center = self.shape_center
             shape_centralization = create_translation(
@@ -275,7 +275,7 @@ class ShapeImage(DeviceDtypeModuleMixin):
             output_size: This will be the resulting image size.
 
         """
-        from shape_fitting.data.normalization import _ShapeNormalization
+        from shape_image.normalization import _ShapeNormalization
 
         with _ShapeNormalization(self, output_size) as shape:
             with self._with_batch_dim(shape) as batched_shape:
@@ -921,7 +921,7 @@ class ShapeImage(DeviceDtypeModuleMixin):
             self
         """
 
-        from shape_fitting.data.normalization import _ShapeNormalization
+        from shape_image.normalization import _ShapeNormalization
 
         with _ShapeNormalization(self):
             center = self.shape_center
