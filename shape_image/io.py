@@ -1,15 +1,17 @@
-import pathlib
-from typing import Callable, Tuple, Union, Optional
-
-import SimpleITK as sitk
-import numpy as np
-import torch
 import os
+import pathlib
+from functools import partial
+from typing import Callable, Optional, Sequence, Union
+
+import numpy as np
+import SimpleITK as sitk
+import torch
+from pytorch_lightning.utilities.enums import LightningEnum
 
 
 def pts_importer(
     filepath: Union[str, pathlib.Path],
-    image_origin: bool = True,
+    image_origin: bool = False,
     device: Union[str, torch.device] = "cpu",
     **kwargs,
 ) -> torch.Tensor:
@@ -86,6 +88,7 @@ def pts_importer(
 def pts_exporter(
     pts: Union[torch.Tensor, np.ndarray],
     file_handle: Union[str, pathlib.Path],
+    image_origin: bool = False,
     **kwargs,
 ):
     """
@@ -109,10 +112,11 @@ def pts_exporter(
     # We are assuming (as on import) that the landmark file was created using
     # Matlab which is 1 based
 
-    if pts.shape[-1] == 2:
-        pts = pts[:, [1, 0]] + 1
-    else:
-        pts = pts[:, [2, 1, 0]] + 1
+    if image_origin:
+        if pts.shape[-1] == 2:
+            pts = pts[:, [1, 0]] + 1
+        else:
+            pts = pts[:, [2, 1, 0]] + 1
 
     if isinstance(pts, torch.Tensor):
         pts = pts.detach().cpu().numpy()
@@ -157,20 +161,6 @@ def load_image(
     return image
 
 
-import os
-from pathlib import Path
-from typing import Union, List, Tuple, Sequence, Optional
-from functools import partial
-from zipfile import ZipFile
-
-import torch
-from matplotlib import pyplot as plt
-from matplotlib.figure import Figure
-from pytorch_lightning.utilities.enums import LightningEnum
-
-from shapenet.data.base_shape_image import BaseShapeImage
-from shapenet.data.shape_image import ShapeImage
-
 IMG_EXTENSIONS_2D = (".png", ".PNG", ".jpg", ".JPG")
 
 IMG_EXTENSIONS_3D = (".mhd", ".nii.gz", ".dcm")
@@ -179,29 +169,41 @@ IMG_EXTENSIONS_3D = (".mhd", ".nii.gz", ".dcm")
 #  image factory
 LMK_EXTENSIONS = (".txt", ".TXT", ".ljson", ".LJSON", ".pts", ".PTS")
 
+
 def _check_file_extensions(path: str, allowed_extensions: Sequence[str]):
     return os.path.isfile(path) and any(
         path.lower().endswith(ext) for ext in allowed_extensions
     )
 
+
 def _is_leaf_dir(path: str):
-    return os.path.isdir(path) and all(os.path.isfile(os.path.join(path, x) for x in os.listdir(path)))
+    return os.path.isdir(path) and all(
+        os.path.isfile(os.path.join(path, x) for x in os.listdir(path))
+    )
+
 
 def _check_for_dir_no_extension_files(path: str):
     return _is_leaf_dir(path) and not any(os.path.extsep in x for x in os.listdir(path))
+
 
 def combine_conditions(path: str, conditions: Sequence[Callable[[str], bool]]) -> bool:
     return all(condition(path) for condition in conditions)
 
 
-
 class _FileTypeConditions(LightningEnum):
-    NIFTI = partial(_check_file_extensions, allowed_extensions=('.nii', '.nii.gz'))
-    DICOM = partial(combine_conditions, conditions=(_check_for_dir_no_extension_files, partial(_check_file_extensions, allowed_extensions=('.dcm', '.dicom'))))
-    MHD = partial(_check_file_extensions, allowed_extensions=('.mhd',))
-    PNG = partial(_check_file_extensions, allowed_extensions=('.png',))
-    JPG = partial(_check_file_extensions, allowed_extensions=('.jpg', '.jpeg'))
-    PTS = partial(_check_file_extensions, allowed_extensions=('.pts',))
+    NIFTI = partial(_check_file_extensions, allowed_extensions=(".nii", ".nii.gz"))
+    DICOM = partial(
+        combine_conditions,
+        conditions=(
+            _check_for_dir_no_extension_files,
+            partial(_check_file_extensions, allowed_extensions=(".dcm", ".dicom")),
+        ),
+    )
+    MHD = partial(_check_file_extensions, allowed_extensions=(".mhd",))
+    PNG = partial(_check_file_extensions, allowed_extensions=(".png",))
+    JPG = partial(_check_file_extensions, allowed_extensions=(".jpg", ".jpeg"))
+    PTS = partial(_check_file_extensions, allowed_extensions=(".pts",))
+
 
 class _ImageFiles(LightningEnum):
     NIFTI = _FileTypeConditions.NIFTI
@@ -210,14 +212,18 @@ class _ImageFiles(LightningEnum):
     PNG = _FileTypeConditions.PNG
     JPG = _FileTypeConditions.JPG
 
+
 class _LandmarkFiles(LightningEnum):
     PTS = _FileTypeConditions.PTS
+
 
 def is_image_path(path):
     return any(e.value(path) for e in _ImageFiles)
 
+
 def is_lmk_path(path):
-    return any*(e.value(path) for e in _LandmarkFiles)
+    return any * (e.value(path) for e in _LandmarkFiles)
+
 
 def get_files_and_leafdirs(path):
     to_process = [path]
@@ -241,16 +247,20 @@ def get_files_and_leafdirs(path):
                 leafdirs.append(current_path)
     return files, leafdirs
 
+
 def parse_for_images(path: str):
     files, leafdirs = get_files_and_leafdirs(path)
     return filter(is_image_path, files + leafdirs)
+
 
 def parse_for_lmk_files(path: str):
     files, leafdirs = get_files_and_leafdirs(path)
     return filter(is_lmk_path, files + leafdirs)
 
+
 def find_corresponding_image(lmk_file: str):
     return parse_for_images(os.path.dirname(lmk_file))
+
 
 def find_corresponding_landmarks(image_path: str):
     return parse_for_lmk_files(os.path.dirname(image_path))
