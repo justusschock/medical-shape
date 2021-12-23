@@ -9,8 +9,8 @@ class TransformShapeValidationMixin(tio.transforms.Transform):
         from shape.subject import ShapeSupportSubject
 
         if not isinstance(subject, ShapeSupportSubject):
-            message = "Using a shape transformation without an explicit "
-            "ShapeSupportSubject may lead to unexpected behaviour"
+            message = ("Using a shape transformation without an explicit "
+                "ShapeSupportSubject may lead to unexpected behaviour")
             
             if message not in _warning_cache:
                 _warning_cache.add(message)
