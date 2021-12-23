@@ -1,12 +1,12 @@
 from collections.abc import Iterable, Mapping
 from typing import Any, Dict, List, Optional, Sequence, Union
+import warnings
 
 import torchio as tio
-from pytorch_lightning.utilities.warnings import WarningCache
 
 from shape.shape import Shape
 
-_warning_cache = WarningCache()
+_warning_cache = set()
 
 
 class ShapeSupportSubject(tio.data.Subject):
@@ -75,10 +75,12 @@ class ShapeSupportSubject(tio.data.Subject):
         if not isinstance(transform, TransformShapeValidationMixin) and bool(
             self.get_shapes_dict()
         ):
-            _warning_cache.warn(
-                "Using the ShapeSupportSubjects together with one or more Shape instances and "
-                "the original torchio transforms can result in unexpected behaior since these "
-                "transforms do not support shapes natively!",
-                UserWarning,
-            )
+            message = "Using the ShapeSupportSubjects together with one or more Shape instances and "
+            "the original torchio transforms can result in unexpected behaior since these "
+            "transforms do not support shapes natively!"
+            
+            if message not in _warning_cache:
+                _warning_cache.add(message)
+                warnings.warn(message, UserWarning)
+            
         return super().add_transform(transform, parameters_dict)

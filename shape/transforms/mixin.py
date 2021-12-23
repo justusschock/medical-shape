@@ -1,7 +1,7 @@
 import torchio as tio
-from pytorch_lightning.utilities.warnings import WarningCache
+import warnings
 
-_warning_cache = WarningCache()
+_warning_cache = set()
 
 
 class TransformShapeValidationMixin(tio.transforms.Transform):
@@ -9,8 +9,10 @@ class TransformShapeValidationMixin(tio.transforms.Transform):
         from shape.subject import ShapeSupportSubject
 
         if not isinstance(subject, ShapeSupportSubject):
-            _warning_cache.warn(
-                "Using a shape transformation without an explicit ShapeSupportSubject may lead to unexpected behaviour",
-                UserWarning,
-            )
+            message = "Using a shape transformation without an explicit "
+            "ShapeSupportSubject may lead to unexpected behaviour"
+            
+            if message not in _warning_cache:
+                _warning_cache.add(message)
+                warnings.warn(message, UserWarning)
         return super().add_transform_to_subject_history(subject)
