@@ -1,18 +1,14 @@
-import json
-import logging
-import pathlib
 import warnings
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
 
 import nibabel as nib
 import numpy as np
+import SimpleITK as sitk
 import torch
 import torchio as tio
-from rising.transforms.functional.affine import (
-    matrix_revert_coordinate_order, points_to_homogeneous)
-from torchio.typing import TypeData, TypePath
+from torchio.typing import TypeData, TypePath, TypeTripletInt
 
-from shape_image.io import pts_exporter, pts_importer
+from shape.io import point_reader, point_writer
 
 SHAPE = "shape"
 
@@ -39,7 +35,7 @@ class Shape(tio.data.Image):
         )
 
     def _parse_tensor(
-        self, tensor: Optional[TypeData], none_ok: bool
+        self, tensor: Optional[TypeData], none_ok: bool = True
     ) -> Optional[torch.Tensor]:
 
         if tensor is None:
@@ -77,33 +73,16 @@ class Shape(tio.data.Image):
     def save(self, path: TypePath, squeeze: Optional[bool] = None) -> None:
         if squeeze:
             raise ValueError("Squeezing is not supported for shapes")
-
-        if str(path).endswith(".pts"):
-            if not torch.allclose(self.affine, torch.eye(4)):
-                logging.warning(
-                    (
-                        "The PTS file format does not support saving affines."
-                        + "Omitting it during saving."
-                        + "This may result in problems when loading this sample again!"
-                    )
-                )
-
-            pts_exporter(self.tensor, path, image_origin=False)
-            return
-
-        if not (str(path).endswith(".mpts")):
-            path = str(path) + ".mpts"
-
-        mpts_exporter(self.tensor, self.affine, path, image_origin=False)
+        point_writer(path, self.tensor, self.affine)
 
     def as_sitk(self):
         raise NotImplementedError
 
     @classmethod
-    def from_sitk(cls, sitk_image):
+    def from_sitk(cls, sitk_image: sitk.Image):
         raise NotImplementedError
 
-    def as_pil(self, transpose):
+    def as_pil(self, transpose: bool = True):
         raise NotImplementedError
 
     def to_gif(self, *args, **kwargs):
@@ -131,7 +110,7 @@ class Shape(tio.data.Image):
         point_fin = nib.affines.apply_affine(self.affine, maxs.detach().cpu().numpy())
         return np.array(point_ini, point_fin)
 
-    def get_bounds(self) -> TypeBounds:
+    def get_bounds(self) -> Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int]]:
         """Get minimum and maximum world coordinates occupied by the image."""
         first_index = self.data.min(0)[0].floor() - 0.5
         last_index = self.data.max(0)[0].ceil() - 0.5
@@ -143,84 +122,20 @@ class Shape(tio.data.Image):
         )
         array = np.array((first_point, last_point))
         bounds_x, bounds_y, bounds_z = array.T.tolist()
-        return bounds_x, bounds_y, bounds_z
+        return tuple(bounds_x), tuple(bounds_y), tuple(bounds_z)
 
     def plot(self, **kwargs):
         # TODO: Implement plotting logic
         raise NotImplementedError
 
     def show(self, viewer_path: Optional[TypePath]):
-        # TODO: Implement showing with external software
+        # TODO: Implement showing with external software (plotly?)
         raise NotImplementedError
 
 
-def point_reader(path: TypePath, **kwargs: Any):
-    if str(path).endswith(".pts"):
-        points = pts_importer(path, image_origin=False, **kwargs)
-        affine = torch.eye(4).to(points)
-    elif str(path).endswith(".mpts"):
-        points, affine = mpts_importer(path, image_origin=False, **kwargs)
-
-    else:
-        raise ValueError(
-            f"Could not find file with extension {str(path).rsplit('.')[1]}. Supported extensions are .pts and .mpts"
-        )
-
-    return points, affine
-
-
-def mpts_importer(
-    filepath: Union[str, pathlib.Path],
-    image_origin: bool = True,
-    device: Union[str, torch.device] = "cpu",
-    **kwargs,
-):
-    with open(filepath) as f:
-        content = json.load(f, **kwargs)
-
-    points = content["points"]
-
-    points = torch.tensor(points, device=device)
-
-    affine = content.get("affine", torch.eye(4))
-    if not isinstance(affine, torch.Tensor):
-        affine = torch.tensor(affine)
-    affine = affine.to(points)
-
-    if image_origin:
-        points = torch.flip(affine, (-1,))
-        affine = matrix_revert_coordinate_order(affine[None])[0]
-    return points, affine
-
-
-# TODO: Rename image_origin to flip_coordinate_order
-def mpts_exporter(
-    points: Union[torch.Tensor, np.ndarray],
-    affine: Union[torch.Tensor, np.ndarray],
-    filepath: Union[str, pathlib.Path],
-    image_origin: bool = False,
-):
-
-    if isinstance(points, np.ndarray):
-        points = torch.from_numpy(points)
-
-    if isinstance(affine, np.ndarray):
-        affine = torch.from_numpy(affine)
-
-    if image_origin:
-        points = torch.flip(points, (-1,))
-        affine = matrix_revert_coordinate_order(affine[None])[0]
-
-    with open(filepath, "w") as f:
-        json.dump(
-            {"affine": affine.tolist(), "points": points.tolist()},
-            f,
-            indent=4,
-            sort_keys=True,
-        )
-
-
-def ensure_3d_points(tensor: TypeData, num_spatial_dims=None) -> TypeData:
+def ensure_3d_points(
+    tensor: TypeData, num_spatial_dims: Optional[int] = None
+) -> TypeData:
     tensor = torch.as_tensor(tensor)
     num_dimensions = tensor.size(-1)
 
