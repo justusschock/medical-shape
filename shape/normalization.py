@@ -5,7 +5,7 @@ import torch
 
 class ShapeNormalization:
     """
-    Context manager to normalizes the shape of an shapeimage to [-1, 1]
+    Context manager to normalizes the shape of a shapeimage to [-1, 1]
     You can pass the attribute name to normalize a different shape than the normal shape
     Uses the old image size or a new size to undo the normalization
     Makes it possible to use the same translation used to translate an image with a gridsampler for the shape
