@@ -15,7 +15,6 @@ def mjson_exporter(
     filepath: Union[str, pathlib.Path],
     flip_coordinate_order: bool = False,
 ):
-
     if isinstance(points, np.ndarray):
         points = torch.from_numpy(points)
 
@@ -54,7 +53,7 @@ def pts_exporter(
     Note that the PTS file format is only powerful enough to represent a
     basic pointcloud. Any further specialization is lost.
     """
-    # Swap the x and y axis and add 1 to undo our processing
+    # Swap the x and y axes and add 1 to undo our processing
     # We are assuming (as on import) that the landmark file was created using
     # Matlab which is 1 based
 
@@ -88,15 +87,12 @@ def point_writer(
 
     if path.endswith(".pts"):
         if affine is None:
-            warnings.warn(
-                f"Cannot save affine {affine} to PTS file. Consider using an mjson format instead!"
-            )
+            warnings.warn(f"Cannot save affine {affine} to PTS file. Consider using an mjson format instead!")
 
         pts_exporter(points, path)
     elif path.endswith(".mjson"):
         if affine is None:
             affine = torch.eye(4)
+        mjson_exporter(points, affine, path)
     else:
-        raise ValueError(
-            f"Cannot identify a suitable file writer for points to file {path}"
-        )
+        raise ValueError(f"Cannot identify a suitable file writer for points to file {path}")
