@@ -4,20 +4,20 @@ name: Docker
 # see: https://help.github.com/en/actions/reference/events-that-trigger-workflows
 on: # Trigger the workflow on push or pull request, but only for the master branch
   push:
-    branches: [main, master]
+    branches: [ main, master ]
   pull_request:
-    branches: [master, main]
+    branches: [ master, main ]
 
 jobs:
-  build-docker:
+  build-docker-cuda:
     runs-on: ubuntu-20.04
-      
+
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-        
+
       - name: Login to DockerHub
-        uses: docker/login-action@v1 
+        uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -26,6 +26,27 @@ jobs:
         # publish master/release
         uses: docker/build-push-action@v2
         with:
-          file: dockers/Dockerfile
+          file: dockers/cuda.Dockerfile
+          push: false
+        timeout-minutes: 50
+
+  build-docker-cpu:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build
+        # publish master/release
+        uses: docker/build-push-action@v2
+        with:
+          file: dockers/cpu.Dockerfile
           push: false
         timeout-minutes: 50
