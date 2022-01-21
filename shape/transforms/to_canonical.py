@@ -21,7 +21,7 @@ class ToCanonical(tio.transforms.preprocessing.ToCanonical, TransformShapeValida
         if shapes_dict:
             if isinstance(self.shape_image_key, str):
                 shape_image_key = self.shape_image_key
-            elif self.shape_image_key is None and len(subject.get_images_dict(intensity_only=False)) == 1:
+            elif self.shape_image_key is None and len(ShapeSupportSubject.exclude_shapes(subject.get_images_dict(intensity_only=False))) == 1:
                 shape_image_key = list(subject.get_images_dict(intensity_only=False).keys())[0]
             else:
                 raise ValueError(
@@ -38,8 +38,6 @@ class ToCanonical(tio.transforms.preprocessing.ToCanonical, TransformShapeValida
         except ValueError:
             new_sub.update(ShapeSupportSubject.exclude_shapes(dict(subject)))
 
-        if shapes_dict:
-            dst_ref_shape = torch.tensor(new_sub[shape_image_key].spatial_shape)
 
         for k, v in shapes_dict.items():
 
