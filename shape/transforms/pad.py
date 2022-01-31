@@ -2,17 +2,12 @@ import nibabel as nib
 import torch
 import torchio as tio
 
-from shape.subject import ShapeSupportSubject
 from shape.transforms.mixin import TransformShapeValidationMixin
 
 
 class Pad(tio.transforms.Pad, TransformShapeValidationMixin):
     def apply_transform(self, subject: tio.data.Subject) -> tio.data.Subject:
-        sub = dict(
-            super().apply_transform(
-                getattr(subject, "get_images_only_subject", lambda: subject)()
-            )
-        )
+        sub = dict(super().apply_transform(getattr(subject, "get_images_only_subject", lambda: subject)()))
         shapes = getattr(subject, "get_shapes_dict", lambda: {})()
 
         index_ini = torch.tensor(self.bounds_parameters[::2], dtype=torch.float)

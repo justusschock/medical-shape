@@ -70,7 +70,7 @@ class ShapeSupportSubject(tio.data.Subject):
         if not isinstance(transform, TransformShapeValidationMixin) and bool(self.get_shapes_dict()):
             message = (
                 "Using the ShapeSupportSubjects together with one or more Shape instances and "
-                "the original torchio transforms can result in unexpected behaior since these "
+                "the original torchio transforms can result in unexpected behavior since these "
                 "transforms do not support shapes natively!"
             )
 
