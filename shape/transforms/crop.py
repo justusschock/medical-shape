@@ -1,18 +1,22 @@
 import nibabel as nib
 import torch
 import torchio as tio
-
 from shape.subject import ShapeSupportSubject
 from shape.transforms.mixin import TransformShapeValidationMixin
 
 
 class Crop(tio.transforms.Crop, TransformShapeValidationMixin):
     def apply_transform(self, subject: tio.data.Subject) -> tio.data.Subject:
-        sub = dict(
-            super().apply_transform(
-                getattr(subject, "get_images_only_subject", lambda: subject)()
+        if not isinstance(subject, ShapeSupportSubject) or subject.get_images_dict(
+            intensity_only=False, include_shapes=False
+        ):
+            sub = dict(
+                super().apply_transform(
+                    getattr(subject, "get_images_only_subject", lambda: subject)()
+                )
             )
-        )
+        else:
+            sub = {}
         shapes = getattr(subject, "get_shapes_dict", lambda: {})()
 
         index_ini = torch.tensor(self.bounds_parameters[::2], dtype=torch.float)

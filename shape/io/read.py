@@ -78,7 +78,7 @@ def mjson_importer(
 
     points = content["points"]
 
-    points = torch.tensor(points, device=device)
+    points = torch.tensor(points, device=device, dtype=torch.float)
 
     affine = content.get("affine", torch.eye(4))
     if not isinstance(affine, torch.Tensor):

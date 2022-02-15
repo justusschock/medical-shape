@@ -1,4 +1,4 @@
-from typing import Union
+from copy import deepcopy
 
 import torch
 import torchio as tio
@@ -6,44 +6,42 @@ from rising.transforms.functional.affine import (
     affine_point_transform,
     parametrize_matrix,
 )
-
 from shape.normalization import ShapeNormalization
 from shape.shape import Shape
-from shape.subject import ShapeSupportSubject
 from shape.transforms.mixin import TransformShapeValidationMixin
 
 
 class Affine(tio.transforms.augmentation.spatial.Affine, TransformShapeValidationMixin):
-    def __init__(
-        self,
-        scales: tio.typing.TypeTripletFloat,
-        degrees: tio.typing.TypeTripletFloat,
-        translation: tio.typing.TypeTripletFloat,
-        center: str = "image",
-        default_pad_value: Union[str, float] = "minimum",
-        image_interpolation: str = "linear",
-        check_shape: bool = True,
-        **kwargs
-    ):
-        assert (
-            center == "image"
-        ), "Currently only affines centered on the image are supported"
+    # def __init__(
+    #     self,
+    #     scales: tio.typing.TypeTripletFloat,
+    #     degrees: tio.typing.TypeTripletFloat,
+    #     translation: tio.typing.TypeTripletFloat,
+    #     center: str = "image",
+    #     default_pad_value: Union[str, float] = "minimum",
+    #     image_interpolation: str = "linear",
+    #     check_shape: bool = True,
+    #     **kwargs
+    # ):
+    #     assert (
+    #         center == "image"
+    #     ), "Currently only affines centered on the image are supported"
 
-        super().__init__(
-            scales,
-            degrees,
-            translation,
-            center,
-            default_pad_value,
-            image_interpolation,
-            check_shape,
-            **kwargs
-        )
+    #     super().__init__(
+    #         scales,
+    #         degrees,
+    #         translation,
+    #         center,
+    #         default_pad_value,
+    #         image_interpolation,
+    #         check_shape,
+    #         **kwargs
+    #     )
 
     # TODO: Add custom class for typing?
-    def apply_transformation(self, subject: tio.data.Subject):
-        current_shape = subject.spatial_shape
-        sub = super().apply_transformation(
+    def apply_transform(self, subject: tio.data.Subject):
+        current_shape = deepcopy(subject.spatial_shape)
+        sub = super().apply_transform(
             getattr(subject, "get_images_only_subject", lambda: subject)()
         )
         new_size = sub.spatial_shape
@@ -71,3 +69,27 @@ class Affine(tio.transforms.augmentation.spatial.Affine, TransformShapeValidatio
             new_shape = Shape(tensor=transformed_shape, affine=v.affine, path=v.path)
             sub_dict[k] = new_shape
         return type(subject)(sub_dict)
+
+
+class RandomAffine(tio.transforms.RandomAffine, TransformShapeValidationMixin):
+    # duplicate this to use custom affine class
+    def apply_transform(self, subject: tio.data.Subject) -> tio.data.Subject:
+        scaling_params, rotation_params, translation_params = self.get_params(
+            self.scales,
+            self.degrees,
+            self.translation,
+            self.isotropic,
+        )
+        arguments = {
+            "scales": scaling_params.tolist(),
+            "degrees": rotation_params.tolist(),
+            "translation": translation_params.tolist(),
+            "center": self.center,
+            "default_pad_value": self.default_pad_value,
+            "image_interpolation": self.image_interpolation,
+            "label_interpolation": self.label_interpolation,
+            "check_shape": self.check_shape,
+        }
+        transform = Affine(**self.add_include_exclude(arguments))
+        transformed = transform(subject)
+        return transformed

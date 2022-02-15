@@ -3,7 +3,6 @@ import json
 import numpy as np
 import torch
 import torchio as tio
-
 from shape import Shape, ShapeSupportSubject
 from shape.transforms import ToCanonical
 
@@ -36,7 +35,9 @@ def to_canonical(in_path, out_path, image_path=None, out_path_image=None):
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="Convert shape to canonical coordinates.")
+    parser = argparse.ArgumentParser(
+        description="Convert shape to canonical coordinates."
+    )
     parser.add_argument("in_path", help="Path to input shape file.")
     parser.add_argument("out_path", help="Path to output shape file.")
     parser.add_argument("--image_path", help="Path to image file.")

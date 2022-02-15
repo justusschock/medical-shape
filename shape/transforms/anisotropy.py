@@ -1,13 +1,16 @@
 import warnings
 
 import torchio as tio
-
 from shape.transforms.mixin import TransformShapeValidationMixin
 from shape.transforms.resample import Resample
 
 
-class RandomAnisotropy(tio.transforms.augmentation.spatial.RandomAnisotropy, TransformShapeValidationMixin):
-    def apply_transformation(self, subject):
+class RandomAnisotropy(
+    tio.transforms.augmentation.spatial.RandomAnisotropy, TransformShapeValidationMixin
+):
+
+    # copy paste to use custom resample trafo
+    def apply_transform(self, subject):
         is_2d = subject.get_first_image().is_2d()
         if is_2d and 2 in self.axes:
             warnings.warn(
@@ -28,7 +31,9 @@ class RandomAnisotropy(tio.transforms.augmentation.spatial.RandomAnisotropy, Tra
             "scalars_only": self.scalars_only,
         }
 
-        downsample = Resample(target=tuple(target_spacing), **self.add_include_exclude(arguments))
+        downsample = Resample(
+            target=tuple(target_spacing), **self.add_include_exclude(arguments)
+        )
         downsampled = downsample(subject)
         image = subject.get_first_image()
         target = image.spatial_shape, image.affine

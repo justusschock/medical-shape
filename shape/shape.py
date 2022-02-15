@@ -6,9 +6,9 @@ import numpy as np
 import SimpleITK as sitk
 import torch
 import torchio as tio
-from torchio.typing import TypeData, TypePath, TypeTripletInt
-
+from rising.utils.affine import points_to_homogeneous
 from shape.io import point_reader, point_writer
+from torchio.typing import TypeData, TypePath, TypeTripletInt
 
 SHAPE = "shape"
 
@@ -33,6 +33,29 @@ class Shape(tio.data.Image):
             reader=reader,
             **kwargs,
         )
+
+    def read_and_check(self, path: TypePath):
+        tensor, affine = self.reader(path)
+        # Make sure the data type is compatible with PyTorch
+        tensor = self._parse_tensor_shape(tensor)
+        tensor = self._parse_tensor(tensor)
+        affine = self._parse_affine(affine)
+        if self.check_nans and torch.isnan(tensor).any():
+            warnings.warn(f'NaNs found in file "{path}"', RuntimeWarning)
+        return tensor, affine
+
+    def _parse_affine(self, affine):
+        if affine is None:
+            return np.eye(4)
+        if isinstance(affine, torch.Tensor):
+            affine = affine.numpy()
+        if not isinstance(affine, np.ndarray):
+            bad_type = type(affine)
+            raise TypeError(f"Affine must be a NumPy array, not {bad_type}")
+        if affine.shape != (4, 4):
+            bad_shape = affine.shape
+            raise ValueError(f"Affine shape must be (4, 4), not {bad_shape}")
+        return affine.astype(np.float64)
 
     def _parse_tensor(
         self, tensor: Optional[TypeData], none_ok: bool = True
@@ -141,7 +164,7 @@ def ensure_3d_points(
 
     if num_dimensions == 2:
         # X, Y
-
+        # TODO: Add zeros instead of to_homogeneous
         tensor = points_to_homogeneous(tensor)
 
     elif num_dimensions != 3:

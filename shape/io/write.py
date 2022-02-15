@@ -21,6 +21,9 @@ def mjson_exporter(
     if isinstance(affine, np.ndarray):
         affine = torch.from_numpy(affine)
 
+    assert isinstance(points, torch.Tensor)
+    points = points.float()
+
     if flip_coordinate_order:
         points = torch.flip(points, (-1,))
         affine = matrix_revert_coordinate_order(affine[None])[0]
@@ -87,7 +90,9 @@ def point_writer(
 
     if path.endswith(".pts"):
         if affine is None:
-            warnings.warn(f"Cannot save affine {affine} to PTS file. Consider using an mjson format instead!")
+            warnings.warn(
+                f"Cannot save affine {affine} to PTS file. Consider using an mjson format instead!"
+            )
 
         pts_exporter(points, path)
     elif path.endswith(".mjson"):
@@ -95,4 +100,6 @@ def point_writer(
             affine = torch.eye(4)
         mjson_exporter(points, affine, path)
     else:
-        raise ValueError(f"Cannot identify a suitable file writer for points to file {path}")
+        raise ValueError(
+            f"Cannot identify a suitable file writer for points to file {path}"
+        )
