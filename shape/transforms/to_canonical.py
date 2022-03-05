@@ -5,7 +5,7 @@ import nibabel as nib
 import numpy as np
 import torch
 import torchio as tio
-from rising.utils.affine import points_to_cartesian, points_to_homogeneous
+from rising.utils.affine import points_to_cartesian, points_to_homogeneous, matrix_revert_coordinate_order
 from shape.subject import ShapeSupportSubject
 from shape.transforms.mixin import TransformShapeValidationMixin
 
@@ -72,16 +72,16 @@ class ToCanonical(
                 )
 
                 hom_points = points_to_homogeneous(v.tensor[None])[0].numpy()
-                trafo = np.linalg.inv(affine_post).dot(affine_pre)
-                points_transformed = []
-                for x in hom_points:
-                    points_transformed.append(trafo.dot(x))
+                
+                trafo = np.linalg.inv(affine_pre) @ affine_post
+
+                points_transformed = (trafo @ hom_points.T).T
 
                 points_transformed = points_to_cartesian(
                     torch.from_numpy(np.array(points_transformed))[None]
                 )[0]
 
-                v.set_data(points_transformed)
+                v.set_data(points_transformed.to(v.tensor))
                 v.affine = affine_post
                 new_sub[k] = v
 
