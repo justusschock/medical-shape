@@ -6,6 +6,7 @@ import numpy as np
 import SimpleITK as sitk
 import torch
 import torchio as tio
+from PIL.Image import Image as PILImage
 from rising.utils.affine import points_to_homogeneous
 from torchio.typing import TypeData, TypePath
 
@@ -35,7 +36,7 @@ class Shape(tio.data.Image):
             **kwargs,
         )
 
-    def read_and_check(self, path: TypePath):
+    def read_and_check(self, path: TypePath) -> Tuple[torch.Tensor, np.ndarray]:
         tensor, affine = self.reader(path)
         # Make sure the data type is compatible with PyTorch
         tensor = self._parse_tensor_shape(tensor)
@@ -45,7 +46,7 @@ class Shape(tio.data.Image):
             warnings.warn(f'NaNs found in file "{path}"', RuntimeWarning)
         return tensor, affine
 
-    def _parse_affine(self, affine):
+    def _parse_affine(self, affine: Optional[Union[np.ndarray, torch.Tensor]]) -> np.ndarray:
         if affine is None:
             return np.eye(4)
         if isinstance(affine, torch.Tensor):
@@ -94,17 +95,17 @@ class Shape(tio.data.Image):
             raise ValueError("Squeezing is not supported for shapes")
         point_writer(path, self.tensor, self.affine)
 
-    def as_sitk(self):
+    def as_sitk(self) -> sitk.Image:
         raise NotImplementedError
 
     @classmethod
-    def from_sitk(cls, sitk_image: sitk.Image):
+    def from_sitk(cls, sitk_image: sitk.Image) -> "Shape":
         raise NotImplementedError
 
-    def as_pil(self, transpose: bool = True):
+    def as_pil(self, transpose: bool = True) -> Optional[PILImage]:
         raise NotImplementedError
 
-    def to_gif(self, *args, **kwargs):
+    def to_gif(self, *args: Any, **kwargs: Any) -> Any:
         raise NotImplementedError
 
     @property
@@ -139,11 +140,11 @@ class Shape(tio.data.Image):
         bounds_x, bounds_y, bounds_z = array.T.tolist()
         return tuple(bounds_x), tuple(bounds_y), tuple(bounds_z)
 
-    def plot(self, **kwargs):
+    def plot(self, **kwargs: Any) -> None:
         # TODO: Implement plotting logic
         raise NotImplementedError
 
-    def show(self, viewer_path: Optional[TypePath]):
+    def show(self, viewer_path: Optional[TypePath]) -> None:
         # TODO: Implement showing with external software (plotly?)
         raise NotImplementedError
 

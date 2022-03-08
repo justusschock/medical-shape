@@ -74,3 +74,8 @@ repos:
     rev: 'v0.931'
     hooks:
     - id: mypy
+
+  - repo: https://github.com/MarcoGorelli/absolufy-imports
+    rev: v0.3.1
+    hooks:
+    -   id: absolufy-imports

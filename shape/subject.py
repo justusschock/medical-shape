@@ -1,6 +1,6 @@
 import warnings
 from collections.abc import Iterable, Mapping
-from typing import Any, Dict, List, Optional, Sequence, Sized, Union
+from typing import Any, Dict, List, Optional, Sequence, Union
 
 import torchio as tio
 
@@ -82,9 +82,6 @@ class ShapeSupportSubject(tio.data.Subject):
 
     def check_consistent_attribute(self, *args, **kwargs):
         return self.get_images_only_subject().check_consistent_attribute(*args, **kwargs)
-
-    # def check_consistent_attribute(self, attribute: str, relative_tolerance: float = 0.000001, absolute_tolerance: float = 0.000001, message: Optional[str] = None) -> None:
-    #     return self.get_images_only_subject().check_consistent_attribute(attribute=attribute, relative_tolerance=relative_tolerance, absolute_tolerance=absolute_tolerance, message=message)
 
     def get_first_image(self) -> tio.data.Image:
         return self.get_images_only_subject().get_first_image()
