@@ -6,7 +6,7 @@ _warning_cache = set()
 
 
 class TransformShapeValidationMixin(tio.transforms.Transform):
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         kwargs.update(parse_input=False)
         super().__init__(**kwargs)
 

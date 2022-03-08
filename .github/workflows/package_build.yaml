@@ -1,7 +1,7 @@
 name: Build Package
 on:
   push
-  
+
 jobs:
   publish-test:
     name: Test Package Build

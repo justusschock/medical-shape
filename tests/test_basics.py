@@ -3,6 +3,7 @@ import os
 import pytest
 import torch
 import torchio as tio
+
 from shape.shape import Shape
 from shape.subject import ShapeSupportSubject
 from shape.transforms import Crop, CropOrPad, Pad, Resample, ToCanonical
@@ -27,9 +28,7 @@ def save(subject: ShapeSupportSubject, path):
 def create_subject():
     torch.manual_seed(42)
     random_image = torch.rand(1, 160, 384, 384)
-    random_shape = torch.stack(
-        [torch.randint(0, s, (200,)) for s in random_image.shape[1:]], -1
-    )
+    random_shape = torch.stack([torch.randint(0, s, (200,)) for s in random_image.shape[1:]], -1)
     subject = ShapeSupportSubject(
         s=Shape(tensor=random_shape),
         i=tio.data.ScalarImage(tensor=random_image),

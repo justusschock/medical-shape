@@ -31,7 +31,7 @@ def mjson_exporter(
     with open(filepath, "w") as f:
         json.dump(
             {
-                "header": "version: 1\nn_points: {}".format(points.shape[0]),
+                "header": f"version: 1\nn_points: {points.shape[0]}",
                 "affine": affine.tolist(),
                 "points": points.tolist(),
             },
@@ -46,15 +46,13 @@ def pts_exporter(
     flip_coordinate_order: bool = False,
     **kwargs,
 ):
-    """
-    Given a file handle to write in to (which should act like a Python `file`
-    object), write out the landmark data. No value is returned.
-    Writes out the PTS format which is a very simple format that does not
-    contain any semantic labels. We assume that the PTS format has been created
-    using Matlab and so use 1-based indexing and put the image x-axis as the
-    first coordinate (which is the second axis within Menpo).
-    Note that the PTS file format is only powerful enough to represent a
-    basic pointcloud. Any further specialization is lost.
+    """Given a file handle to write in to (which should act like a Python `file` object), write out the landmark
+    data.
+
+    No value is returned. Writes out the PTS format which is a very simple format that does not contain any semantic
+    labels. We assume that the PTS format has been created using Matlab and so use 1-based indexing and put the image
+    x-axis as the first coordinate (which is the second axis within Menpo). Note that the PTS file format is only
+    powerful enough to represent a basic pointcloud. Any further specialization is lost.
     """
     # Swap the x and y axes and add 1 to undo our processing
     # We are assuming (as on import) that the landmark file was created using
@@ -69,7 +67,7 @@ def pts_exporter(
     if isinstance(pts, torch.Tensor):
         pts = pts.detach().cpu().numpy()
 
-    header = "version: 1\nn_points: {}\n{{".format(pts.shape[0])
+    header = f"version: 1\nn_points: {pts.shape[0]}\n{{"
     np.savetxt(
         file_handle,
         pts,
@@ -90,9 +88,7 @@ def point_writer(
 
     if path.endswith(".pts"):
         if affine is None:
-            warnings.warn(
-                f"Cannot save affine {affine} to PTS file. Consider using an mjson format instead!"
-            )
+            warnings.warn(f"Cannot save affine {affine} to PTS file. Consider using an mjson format instead!")
 
         pts_exporter(points, path)
     elif path.endswith(".mjson"):
@@ -100,6 +96,4 @@ def point_writer(
             affine = torch.eye(4)
         mjson_exporter(points, affine, path)
     else:
-        raise ValueError(
-            f"Cannot identify a suitable file writer for points to file {path}"
-        )
+        raise ValueError(f"Cannot identify a suitable file writer for points to file {path}")

@@ -1,8 +1,9 @@
 import warnings
 from collections.abc import Iterable, Mapping
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Dict, List, Optional, Sequence, Sized, Union
 
 import torchio as tio
+
 from shape.shape import Shape
 
 _warning_cache = set()
@@ -25,17 +26,13 @@ class ShapeSupportSubject(tio.data.Subject):
         return new
 
     @staticmethod
-    def exclude_shapes(
-        collection: Union[Iterable, Mapping]
-    ) -> Union[Iterable, Mapping]:
+    def exclude_shapes(collection: Union[Iterable, Mapping]) -> Union[Sequence, Mapping]:
         if isinstance(collection, Mapping):
             return {k: v for k, v in collection.items() if not isinstance(v, Shape)}
         elif isinstance(collection, Iterable):
             return [v for v in collection if not isinstance(v, Shape)]
 
-        raise TypeError(
-            "exclude_shapes is only implemented for Mappings and Sequences currently"
-        )
+        raise TypeError("exclude_shapes is only implemented for Mappings and Sequences currently")
 
     def get_images(
         self,
@@ -44,9 +41,7 @@ class ShapeSupportSubject(tio.data.Subject):
         exclude: Optional[Sequence[str]] = None,
         include_shapes: bool = True,
     ) -> List[tio.data.Image]:
-        images = super().get_images(
-            intensity_only=intensity_only, include=include, exclude=exclude
-        )
+        images = super().get_images(intensity_only=intensity_only, include=include, exclude=exclude)
         if not include_shapes:
             images = self.exclude_shapes(images)
         return images
@@ -58,9 +53,7 @@ class ShapeSupportSubject(tio.data.Subject):
         exclude: Optional[Sequence[str]] = None,
         include_shapes: bool = True,
     ) -> Dict[str, tio.data.Image]:
-        images = super().get_images_dict(
-            intensity_only=intensity_only, include=include, exclude=exclude
-        )
+        images = super().get_images_dict(intensity_only=intensity_only, include=include, exclude=exclude)
         if not include_shapes:
             images = self.exclude_shapes(images)
         return images
@@ -71,14 +64,10 @@ class ShapeSupportSubject(tio.data.Subject):
     def get_shapes_dict(self):
         return {k: v for k, v in self.items() if isinstance(v, Shape)}
 
-    def add_transform(
-        self, transform: tio.transforms.Transform, parameters_dict: Dict[str, Any]
-    ) -> None:
+    def add_transform(self, transform: tio.transforms.Transform, parameters_dict: Dict[str, Any]) -> None:
         from shape.transforms.mixin import TransformShapeValidationMixin
 
-        if not isinstance(transform, TransformShapeValidationMixin) and bool(
-            self.get_shapes_dict()
-        ):
+        if not isinstance(transform, TransformShapeValidationMixin) and bool(self.get_shapes_dict()):
             message = (
                 "Using the ShapeSupportSubjects together with one or more Shape instances and "
                 "the original torchio transforms can result in unexpected behavior since these "
@@ -92,9 +81,7 @@ class ShapeSupportSubject(tio.data.Subject):
         return super().add_transform(transform, parameters_dict)
 
     def check_consistent_attribute(self, *args, **kwargs):
-        return self.get_images_only_subject().check_consistent_attribute(
-            *args, **kwargs
-        )
+        return self.get_images_only_subject().check_consistent_attribute(*args, **kwargs)
 
     # def check_consistent_attribute(self, attribute: str, relative_tolerance: float = 0.000001, absolute_tolerance: float = 0.000001, message: Optional[str] = None) -> None:
     #     return self.get_images_only_subject().check_consistent_attribute(attribute=attribute, relative_tolerance=relative_tolerance, absolute_tolerance=absolute_tolerance, message=message)

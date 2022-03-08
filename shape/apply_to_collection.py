@@ -8,9 +8,7 @@ import torchio as tio
 
 def _is_namedtuple(obj: object) -> bool:
     # https://github.com/pytorch/pytorch/blob/v1.8.1/torch/nn/parallel/scatter_gather.py#L4-L8
-    return (
-        isinstance(obj, tuple) and hasattr(obj, "_asdict") and hasattr(obj, "_fields")
-    )
+    return isinstance(obj, tuple) and hasattr(obj, "_asdict") and hasattr(obj, "_fields")
 
 
 def _is_dataclass_instance(obj: object) -> bool:
@@ -44,9 +42,7 @@ def apply_to_collection(
         The resulting collection
     """
     # Breaking condition
-    if isinstance(data, dtype) and (
-        wrong_dtype is None or not isinstance(data, wrong_dtype)
-    ):
+    if isinstance(data, dtype) and (wrong_dtype is None or not isinstance(data, wrong_dtype)):
         return function(data, *args, **kwargs)
 
     elem_type = type(data)

@@ -2,10 +2,8 @@ from copy import deepcopy
 
 import torch
 import torchio as tio
-from rising.transforms.functional.affine import (
-    affine_point_transform,
-    parametrize_matrix,
-)
+from rising.transforms.functional.affine import affine_point_transform, parametrize_matrix
+
 from shape.normalization import ShapeNormalization
 from shape.shape import Shape
 from shape.transforms.mixin import TransformShapeValidationMixin
@@ -41,9 +39,7 @@ class Affine(tio.transforms.augmentation.spatial.Affine, TransformShapeValidatio
     # TODO: Add custom class for typing?
     def apply_transform(self, subject: tio.data.Subject):
         current_shape = deepcopy(subject.spatial_shape)
-        sub = super().apply_transform(
-            getattr(subject, "get_images_only_subject", lambda: subject)()
-        )
+        sub = super().apply_transform(getattr(subject, "get_images_only_subject", lambda: subject)())
         new_size = sub.spatial_shape
 
         affine_lmk_matrix = parametrize_matrix(
@@ -63,9 +59,7 @@ class Affine(tio.transforms.augmentation.spatial.Affine, TransformShapeValidatio
             transformed_shape = affine_point_transform(
                 point_batch=normalized_shape[None], matrix_batch=affine_lmk_matrix
             )[0]
-            transformed_shape = ShapeNormalization.denormalize(
-                transformed_shape, new_size
-            )
+            transformed_shape = ShapeNormalization.denormalize(transformed_shape, new_size)
             new_shape = Shape(tensor=transformed_shape, affine=v.affine, path=v.path)
             sub_dict[k] = new_shape
         return type(subject)(sub_dict)

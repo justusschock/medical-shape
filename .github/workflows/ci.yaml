@@ -45,7 +45,7 @@ jobs:
         key: ${{ runner.os }}-pip-td${{ steps.times.outputs.period }}-py${{ matrix.python-version }}-${{ hashFiles('requirements.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-td${{ steps.times.outputs.period }}-py${{ matrix.python-version }}-
-    
+
     - name: Install dependencies
       run: |
         pip install pytest pytest-sugar codecov coverage
@@ -57,7 +57,7 @@ jobs:
       run: |
         # NOTE: do not include coverage report here, see: https://github.com/nedbat/coveragepy/issues/1003
         coverage run --source shape -m pytest tests --junitxml=junit/test-results-${{ runner.os }}-py${{ matrix.python-version }}.xml
-  
+
     - name: Upload pytest results
       uses: actions/upload-artifact@v2
       with:

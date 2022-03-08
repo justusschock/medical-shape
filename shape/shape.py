@@ -7,8 +7,9 @@ import SimpleITK as sitk
 import torch
 import torchio as tio
 from rising.utils.affine import points_to_homogeneous
+from torchio.typing import TypeData, TypePath
+
 from shape.io import point_reader, point_writer
-from torchio.typing import TypeData, TypePath, TypeTripletInt
 
 SHAPE = "shape"
 
@@ -57,9 +58,7 @@ class Shape(tio.data.Image):
             raise ValueError(f"Affine shape must be (4, 4), not {bad_shape}")
         return affine.astype(np.float64)
 
-    def _parse_tensor(
-        self, tensor: Optional[TypeData], none_ok: bool = True
-    ) -> Optional[torch.Tensor]:
+    def _parse_tensor(self, tensor: Optional[TypeData], none_ok: bool = True) -> Optional[torch.Tensor]:
 
         if tensor is None:
             if none_ok:
@@ -70,10 +69,7 @@ class Shape(tio.data.Image):
             tensor = tio.data.io.check_uint_to_int(tensor)
             tensor = torch.as_tensor(tensor)
         elif not isinstance(tensor, torch.Tensor):
-            message = (
-                "Input tensor must be a PyTorch tensor or NumPy array,"
-                f' but type "{type(tensor)}" was found'
-            )
+            message = "Input tensor must be a PyTorch tensor or NumPy array," f' but type "{type(tensor)}" was found'
             raise TypeError(message)
         ndim = tensor.ndim
         if ndim != 2:
@@ -112,11 +108,11 @@ class Shape(tio.data.Image):
         raise NotImplementedError
 
     @property
-    def shape(self) -> Tuple[int, int, int, int]:
+    def shape(self) -> Tuple[int, ...]:
         return (1, *self.spatial_shape)
 
     @property
-    def spatial_shape(self) -> TypeTripletInt:
+    def spatial_shape(self) -> Tuple[int, ...]:
         mins = self.data.min(0)[0].floor()
         maxs = self.data.max(0)[0].ceil()
         shape = tuple((maxs - mins).tolist())
@@ -133,16 +129,12 @@ class Shape(tio.data.Image):
         point_fin = nib.affines.apply_affine(self.affine, maxs.detach().cpu().numpy())
         return np.array(point_ini, point_fin)
 
-    def get_bounds(self) -> Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int]]:
+    def get_bounds(self) -> Tuple[Tuple[int, ...], Tuple[int, ...], Tuple[int, ...]]:
         """Get minimum and maximum world coordinates occupied by the image."""
         first_index = self.data.min(0)[0].floor() - 0.5
         last_index = self.data.max(0)[0].ceil() - 0.5
-        first_point = nib.affines.apply_affine(
-            self.affine, first_index.detach().cpu().numpy()
-        )
-        last_point = nib.affines.apply_affine(
-            self.affine, last_index.detach().cpu().numpy()
-        )
+        first_point = nib.affines.apply_affine(self.affine, first_index.detach().cpu().numpy())
+        last_point = nib.affines.apply_affine(self.affine, last_index.detach().cpu().numpy())
         array = np.array((first_point, last_point))
         bounds_x, bounds_y, bounds_z = array.T.tolist()
         return tuple(bounds_x), tuple(bounds_y), tuple(bounds_z)
@@ -156,9 +148,7 @@ class Shape(tio.data.Image):
         raise NotImplementedError
 
 
-def ensure_3d_points(
-    tensor: TypeData, num_spatial_dims: Optional[int] = None
-) -> TypeData:
+def ensure_3d_points(tensor: TypeData, num_spatial_dims: Optional[int] = None) -> TypeData:
     tensor = torch.as_tensor(tensor)
     num_dimensions = tensor.size(-1)
 

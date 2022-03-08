@@ -28,11 +28,11 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: '3.x'
-          
+
       - name: Check For Configure File
         run: if [[ -f "configure.py" ]]; then echo '::set-output name=CONFIGURE_EXISTS::True'; else echo '::set-output name=CONFIGURE_EXISTS::False'; fi
         id: check_config
-        
+
       - name: Get color
         run: echo "The selected color is ${{ steps.random-color-generator.outputs.SELECTED_COLOR }}"
 

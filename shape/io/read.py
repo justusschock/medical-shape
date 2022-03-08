@@ -13,20 +13,15 @@ def pts_importer(
     device: Union[str, torch.device] = "cpu",
     **kwargs,
 ) -> torch.Tensor:
-    """
-    Importer for the PTS file format. Assumes version 1 of the format.
-    Implementations of this class should override the :meth:`_build_points`
-    which determines the ordering of axes. For example, for images, the
-    `x` and `y` axes are flipped such that the first axis is `y` (height
-    in the image domain).
-    Note that PTS has a very loose format definition. Here we make the
-    assumption (as is common) that PTS landmarks are 1-based. That is,
-    landmarks on a 480x480 image are in the range [1-480]. As Menpo is
-    consistently 0-based, we *subtract 1* off each landmark value
-    automatically.
-    If you want to use PTS landmarks that are 0-based, you will have to
-    manually add one back on to landmarks post importing.
-    Landmark set label: PTS
+    """Importer for the PTS file format.
+
+    Assumes version 1 of the format. Implementations of this class should override the :meth:`_build_points` which
+    determines the ordering of axes. For example, for images, the `x` and `y` axes are flipped such that the first axis
+    is `y` (height in the image domain). Note that PTS has a very loose format definition. Here we make the assumption
+    (as is common) that PTS landmarks are 1-based. That is, landmarks on a 480x480 image are in the range [1-480]. As
+    Menpo is consistently 0-based, we *subtract 1* off each landmark value automatically. If you want to use PTS
+    landmarks that are 0-based, you will have to manually add one back on to landmarks post importing. Landmark set
+    label: PTS
     """
     with open(filepath, "r", **kwargs) as f:
         lines = [l.strip() for l in f.readlines()]
