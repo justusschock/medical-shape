@@ -6,7 +6,6 @@ import numpy as np
 import SimpleITK as sitk
 import torch
 import torchio as tio
-from PIL.Image import Image as PILImage
 from rising.utils.affine import points_to_homogeneous
 from torchio.typing import TypeData, TypePath
 
@@ -102,7 +101,7 @@ class Shape(tio.data.Image):
     def from_sitk(cls, sitk_image: sitk.Image) -> "Shape":
         raise NotImplementedError
 
-    def as_pil(self, transpose: bool = True) -> Optional[PILImage]:
+    def as_pil(self, transpose: bool = True) -> None:
         raise NotImplementedError
 
     def to_gif(self, *args: Any, **kwargs: Any) -> Any:
