@@ -83,7 +83,7 @@ class Shape(tio.data.Image):
             tensor = tensor.to(torch.uint8)
         if self.check_nans and torch.isnan(tensor).any():
             warnings.warn(f"NaNs found in tensor", RuntimeWarning)
-        return tensor
+        return tensor.float()
 
     @staticmethod
     def _parse_tensor_shape(tensor: torch.Tensor) -> TypeData:

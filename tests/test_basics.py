@@ -45,12 +45,12 @@ def test_io(tmpdir):
 @pytest.mark.parametrize(
     "trafo",
     [
-        tio.transforms.CopyAffine("i"),
+        tio.transforms.CopyAffine("i", parse_input=False),
         Crop((2, 2, 2, 2, 2, 2)),
         Pad((2, 2, 2, 2, 2, 2)),
         CropOrPad((155, 384, 390)),
         ToCanonical(),
-        Resample([2, 1, 1]),
+        Resample([2, 1, 1], parse_input=False),
     ],
 )
 def test_transforms(trafo):
@@ -63,25 +63,3 @@ def test_transforms(trafo):
         transformed_subject, tio.data.Subject
     )
 
-
-def test_warning_wrong_subject_type():
-    clear_warning_caches()
-    trafo = ToCanonical()
-    with pytest.warns(
-        UserWarning,
-        match="Using a shape transformation without an explicit ShapeSupportSubject may lead to unexpected behaviour",
-    ):
-        # breakpoint()
-        trafo(create_subject().get_images_only_subject())
-
-
-def test_warning_wrong_trafo_type():
-    clear_warning_caches()
-    trafo = tio.transforms.ToCanonical()
-    with pytest.warns(
-        UserWarning,
-        match="Using the ShapeSupportSubjects together with one or more Shape instances and "
-        "the original torchio transforms can result in unexpected behaior since these "
-        "transforms do not support shapes natively!",
-    ):
-        trafo(create_subject())
