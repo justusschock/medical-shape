@@ -26,3 +26,7 @@ jobs:
           --sdist
           --wheel
           --outdir dist/
+          
+      - name: Run Pacakge install
+        run: >-
+          pip install .
