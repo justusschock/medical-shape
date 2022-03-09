@@ -1,4 +1,4 @@
-__version__ = "0.0.3"
+from shape._version import version as __version__
 
 from shape.shape import Shape
 from shape.subject import ShapeSupportSubject
