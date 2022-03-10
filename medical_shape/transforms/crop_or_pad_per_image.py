@@ -1,7 +1,7 @@
 import torchio as tio
 
-from shape.subject import ShapeSupportSubject
-from shape.transforms.crop_or_pad import CropOrPad
+from medical_shape.subject import ShapeSupportSubject
+from medical_shape.transforms.crop_or_pad import CropOrPad
 
 
 class CropOrPadPerImage(CropOrPad):

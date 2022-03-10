@@ -9,7 +9,7 @@ import torchio as tio
 from rising.utils.affine import points_to_homogeneous
 from torchio.typing import TypeData, TypePath
 
-from shape.io import point_reader, point_writer
+from medical_shape.io import point_reader, point_writer
 
 SHAPE = "shape"
 

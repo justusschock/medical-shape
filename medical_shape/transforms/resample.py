@@ -2,9 +2,9 @@ from copy import deepcopy
 
 import torchio as tio
 
-from shape.normalization import ShapeNormalization
-from shape.subject import ShapeSupportSubject
-from shape.transforms.mixin import TransformShapeValidationMixin
+from medical_shape.normalization import ShapeNormalization
+from medical_shape.subject import ShapeSupportSubject
+from medical_shape.transforms.mixin import TransformShapeValidationMixin
 
 
 # Need to subclass from TransformShapeValidationMixin as that one fixes kwargs

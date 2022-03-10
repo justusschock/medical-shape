@@ -1,8 +1,8 @@
 import torchio as tio
 
-from shape.transforms.crop import Crop
-from shape.transforms.mixin import TransformShapeValidationMixin
-from shape.transforms.pad import Pad
+from medical_shape.transforms.crop import Crop
+from medical_shape.transforms.mixin import TransformShapeValidationMixin
+from medical_shape.transforms.pad import Pad
 
 
 class CropOrPad(tio.transforms.CropOrPad, TransformShapeValidationMixin):

@@ -4,9 +4,9 @@ import nibabel as nib
 import torch
 import torchio as tio
 
-from shape.shape import Shape
-from shape.subject import ShapeSupportSubject
-from shape.transforms.mixin import TransformShapeValidationMixin
+from medical_shape.shape import Shape
+from medical_shape.subject import ShapeSupportSubject
+from medical_shape.transforms.mixin import TransformShapeValidationMixin
 
 
 class Crop(tio.transforms.Crop, TransformShapeValidationMixin):

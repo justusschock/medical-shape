@@ -4,9 +4,9 @@ import torch
 import torchio as tio
 from rising.transforms.functional.affine import affine_point_transform, parametrize_matrix
 
-from shape.normalization import ShapeNormalization
-from shape.shape import Shape
-from shape.transforms.mixin import TransformShapeValidationMixin
+from medical_shape.normalization import ShapeNormalization
+from medical_shape.shape import Shape
+from medical_shape.transforms.mixin import TransformShapeValidationMixin
 
 
 class Affine(tio.transforms.augmentation.spatial.Affine, TransformShapeValidationMixin):

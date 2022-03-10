@@ -4,14 +4,14 @@ import pytest
 import torch
 import torchio as tio
 
-from shape.shape import Shape
-from shape.subject import ShapeSupportSubject
-from shape.transforms import Crop, CropOrPad, Pad, Resample, ToCanonical
+from medical_shape.shape import Shape
+from medical_shape.subject import ShapeSupportSubject
+from medical_shape.transforms import Crop, CropOrPad, Pad, Resample, ToCanonical
 
 
 def clear_warning_caches():
-    from shape.subject import _warning_cache as cache_subject
-    from shape.transforms.mixin import _warning_cache as cache_transform
+    from medical_shape.subject import _warning_cache as cache_subject
+    from medical_shape.transforms.mixin import _warning_cache as cache_transform
 
     cache_subject.clear()
     cache_transform.clear()

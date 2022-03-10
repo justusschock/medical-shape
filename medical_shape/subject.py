@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, Sequence, Union
 
 import torchio as tio
 
-from shape.shape import Shape
+from medical_shape.shape import Shape
 
 _warning_cache = set()
 
@@ -65,7 +65,7 @@ class ShapeSupportSubject(tio.data.Subject):
         return {k: v for k, v in self.items() if isinstance(v, Shape)}
 
     def add_transform(self, transform: tio.transforms.Transform, parameters_dict: Dict[str, Any]) -> None:
-        from shape.transforms.mixin import TransformShapeValidationMixin
+        from medical_shape.transforms.mixin import TransformShapeValidationMixin
 
         if not isinstance(transform, TransformShapeValidationMixin) and bool(self.get_shapes_dict()):
             message = (

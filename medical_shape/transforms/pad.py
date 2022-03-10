@@ -5,8 +5,8 @@ import torch
 import torchio as tio
 
 from shape import ShapeSupportSubject
-from shape.shape import Shape
-from shape.transforms.mixin import TransformShapeValidationMixin
+from medical_shape.shape import Shape
+from medical_shape.transforms.mixin import TransformShapeValidationMixin
 
 
 class Pad(tio.transforms.Pad, TransformShapeValidationMixin):

@@ -7,9 +7,9 @@ import torch
 import torchio as tio
 from rising.utils.affine import matrix_revert_coordinate_order, points_to_cartesian, points_to_homogeneous
 
-from shape.shape import Shape
-from shape.subject import ShapeSupportSubject
-from shape.transforms.mixin import TransformShapeValidationMixin
+from medical_shape.shape import Shape
+from medical_shape.subject import ShapeSupportSubject
+from medical_shape.transforms.mixin import TransformShapeValidationMixin
 
 
 class ToCanonical(tio.transforms.preprocessing.ToCanonical, TransformShapeValidationMixin):

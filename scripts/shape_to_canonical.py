@@ -5,7 +5,7 @@ import torch
 import torchio as tio
 
 from shape import Shape, ShapeSupportSubject
-from shape.transforms import ToCanonical
+from medical_shape.transforms import ToCanonical
 
 
 def to_canonical(in_path, out_path, image_path=None, out_path_image=None):

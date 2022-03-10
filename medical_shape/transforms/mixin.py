@@ -11,7 +11,7 @@ class TransformShapeValidationMixin(tio.transforms.Transform):
         super().__init__(**kwargs)
 
     def add_transform_to_subject_history(self, subject):
-        from shape.subject import ShapeSupportSubject
+        from medical_shape.subject import ShapeSupportSubject
 
         if not isinstance(subject, ShapeSupportSubject):
             message = (

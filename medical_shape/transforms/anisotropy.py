@@ -2,8 +2,8 @@ import warnings
 
 import torchio as tio
 
-from shape.transforms.mixin import TransformShapeValidationMixin
-from shape.transforms.resample import Resample
+from medical_shape.transforms.mixin import TransformShapeValidationMixin
+from medical_shape.transforms.resample import Resample
 
 
 class RandomAnisotropy(tio.transforms.augmentation.spatial.RandomAnisotropy, TransformShapeValidationMixin):
