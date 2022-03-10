@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import torchio as tio
 
-from medical_shapeimport Shape, ShapeSupportSubject
+from medical_shape import Shape, ShapeSupportSubject
 from medical_shape.transforms import ToCanonical
 
 
