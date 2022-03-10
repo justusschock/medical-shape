@@ -4,7 +4,7 @@ import nibabel as nib
 import torch
 import torchio as tio
 
-from shape import ShapeSupportSubject
+from medical_shapeimport ShapeSupportSubject
 from medical_shape.shape import Shape
 from medical_shape.transforms.mixin import TransformShapeValidationMixin
 
