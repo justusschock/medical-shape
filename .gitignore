@@ -131,4 +131,3 @@ dmypy.json
 .idea/
 .vscode/
 
-*_version.py
