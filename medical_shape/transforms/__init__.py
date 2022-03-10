@@ -10,6 +10,7 @@ from medical_shape.transforms.pad import Pad
 from medical_shape.transforms.resample import Resample
 from medical_shape.transforms.rescale_intensity import RescaleIntensityPercentiles
 from medical_shape.transforms.to_canonical import ToCanonical
+from medical_shape.transforms.to_orientation import ShapeToOrientation
 
 __all__ = [
     "Affine",
@@ -24,5 +25,6 @@ __all__ = [
     "Resample",
     "RescaleIntensityPercentiles",
     "ToCanonical",
+    "ShapeToOrientation",
     "TransformShapeValidationMixin",
 ]
