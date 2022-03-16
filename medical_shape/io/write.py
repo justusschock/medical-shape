@@ -1,7 +1,7 @@
 import json
 import pathlib
 import warnings
-from typing import Union
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -12,6 +12,7 @@ from torchio.typing import TypePath
 def mjson_exporter(
     points: Union[torch.Tensor, np.ndarray],
     affine: Union[torch.Tensor, np.ndarray],
+    point_descriptions: Optional[Tuple[str, ...]],
     filepath: Union[str, pathlib.Path],
     flip_coordinate_order: bool = False,
 ):
@@ -34,6 +35,7 @@ def mjson_exporter(
                 "header": f"version: 1\nn_points: {points.shape[0]}",
                 "affine": affine.tolist(),
                 "points": points.tolist(),
+                "descriptions": point_descriptions,
             },
             f,
             indent=4,
@@ -83,6 +85,7 @@ def point_writer(
     path: TypePath,
     points: torch.Tensor,
     affine: Union[torch.Tensor, np.ndarray, None] = None,
+    point_descriptions: Optional[Tuple[str, ...]] = None,
 ):
     path = str(path)
 
@@ -90,10 +93,15 @@ def point_writer(
         if affine is None:
             warnings.warn(f"Cannot save affine {affine} to PTS file. Consider using an mjson format instead!")
 
+        if point_descriptions is None:
+            warnings.warn(
+                f"Cannot save point descriptions {point_descriptions} to PTS file. Consider using an mjson format instead!"
+            )
+
         pts_exporter(points, path)
     elif path.endswith(".mjson"):
         if affine is None:
             affine = torch.eye(4)
-        mjson_exporter(points, affine, path)
+        mjson_exporter(points, affine, point_descriptions, path)
     else:
         raise ValueError(f"Cannot identify a suitable file writer for points to file {path}")

@@ -60,7 +60,9 @@ class Affine(tio.transforms.augmentation.spatial.Affine, TransformShapeValidatio
                 point_batch=normalized_shape[None], matrix_batch=affine_lmk_matrix
             )[0]
             transformed_shape = ShapeNormalization.denormalize(transformed_shape, new_size)
-            new_shape = Shape(tensor=transformed_shape, affine=v.affine, path=v.path)
+            new_shape = Shape(
+                tensor=transformed_shape, affine=v.affine, path=v.path, point_descriptions=v.point_descriptions
+            )
             sub_dict[k] = new_shape
         return type(subject)(sub_dict)
 

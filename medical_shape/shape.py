@@ -1,5 +1,5 @@
 import warnings
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 import nibabel as nib
 import numpy as np
@@ -12,19 +12,24 @@ from torchio.typing import TypeData, TypePath
 from medical_shape.io import point_reader, point_writer
 
 SHAPE = "shape"
+POINT_DESCRIPTIONS = "point_descriptions"
 
 
 class Shape(tio.data.Image):
+    _loaded: bool
+
     def __init__(
         self,
         path: Union[TypePath, Sequence[TypePath], None] = None,
         type: str = SHAPE,
         tensor: Optional[TypeData] = None,
         affine: Optional[TypeData] = None,
+        point_descriptions: Optional[Sequence[str]] = None,
         check_nans: bool = False,  # removed by ITK by default
         reader: Callable = point_reader,
         **kwargs: Dict[str, Any],
     ):
+
         super().__init__(
             path=path,
             type=type,
@@ -35,15 +40,96 @@ class Shape(tio.data.Image):
             **kwargs,
         )
 
-    def read_and_check(self, path: TypePath) -> Tuple[torch.Tensor, np.ndarray]:
-        tensor, affine = self.reader(path)
+        self[POINT_DESCRIPTIONS] = point_descriptions
+
+    def __getitem__(self, item):
+        if item in (tio.data.image.DATA, tio.data.image.AFFINE, POINT_DESCRIPTIONS):
+            if item not in self:
+                self.load()
+        return super().__getitem__(item)
+
+    def __copy__(self):
+        kwargs = {
+            "tensor": self.data,
+            "affine": self.affine,
+            "type": self.type,
+            "path": self.path,
+            "point_descriptions": self.point_descriptions,
+        }
+        for key, value in self.items():
+            if key in (*tio.data.image.PROTECTED_KEYS, POINT_DESCRIPTIONS):
+                continue
+            kwargs[key] = value  # should I copy? deepcopy?
+        return self.__class__(**kwargs)
+
+    def read_and_check(self, path: TypePath) -> Tuple[torch.Tensor, np.ndarray, Union[None, Sequence[str]]]:
+        tensor, affine, point_descriptions = self.reader(path)
         # Make sure the data type is compatible with PyTorch
         tensor = self._parse_tensor_shape(tensor)
         tensor = self._parse_tensor(tensor)
         affine = self._parse_affine(affine)
         if self.check_nans and torch.isnan(tensor).any():
             warnings.warn(f'NaNs found in file "{path}"', RuntimeWarning)
-        return tensor, affine
+        return tensor, affine, point_descriptions
+
+    def load(self) -> None:
+        r"""Load the image from disk.
+        Returns:
+            Tuple containing a 4D tensor of size :math:`(C, W, H, D)` and a 2D
+            :math:`4 \times 4` affine matrix to convert voxel indices to world
+            coordinates.
+        """
+        if self._loaded:
+            return
+        paths = self.path if self._is_multipath() else [self.path]
+        tensor, affine, point_descriptions = self.read_and_check(paths[0])
+        tensors = [tensor]
+        descriptions: Optional[List[str]] = (
+            point_descriptions if point_descriptions is None else list(point_descriptions)
+        )
+
+        for path in paths[1:]:
+            new_tensor, new_affine, point_descriptions = self.read_and_check(path)
+            if not np.array_equal(affine, new_affine):
+                message = (
+                    "Files have different affine matrices."
+                    f"\nMatrix of {paths[0]}:"
+                    f"\n{affine}"
+                    f"\nMatrix of {path}:"
+                    f"\n{new_affine}"
+                )
+                warnings.warn(message, RuntimeWarning)
+            if not tensor.shape[1:] == new_tensor.shape[1:]:
+                message = f"Files shape do not match, found {tensor.shape}" f"and {new_tensor.shape}"
+                RuntimeError(message)
+            tensors.append(new_tensor)
+
+            if point_descriptions is not None and descriptions is not None:
+                descriptions.extend(list(point_descriptions))
+
+        if descriptions is None:
+            all_point_descriptions = descriptions
+        else:
+            if isinstance(descriptions, Iterable):
+                all_point_descriptions = tuple(descriptions)
+            else:
+                raise TypeError(f"Point descriptions must be iterable or None, not {type(descriptions)}")
+        tensor = torch.cat(tensors)
+
+        self[POINT_DESCRIPTIONS] = all_point_descriptions
+        self.set_data(tensor)
+        self.affine = affine
+        self._loaded = True
+
+    def set_data(self, tensor: TypeData) -> None:
+        if POINT_DESCRIPTIONS in self and self[POINT_DESCRIPTIONS] is not None:
+            if len(self[POINT_DESCRIPTIONS]) != tensor.size(0):
+                raise ValueError(
+                    f"Number of point descriptions ({len(self[POINT_DESCRIPTIONS])}) "
+                    f"does not match number of points ({tensor.size(0)})"
+                )
+
+        return super().set_data(tensor)
 
     def _parse_affine(self, affine: Optional[Union[np.ndarray, torch.Tensor]]) -> np.ndarray:
         if affine is None:
@@ -92,7 +178,7 @@ class Shape(tio.data.Image):
     def save(self, path: TypePath, squeeze: Optional[bool] = None) -> None:
         if squeeze:
             raise ValueError("Squeezing is not supported for shapes")
-        point_writer(path, self.tensor, self.affine)
+        point_writer(path, self.tensor, self.affine, self.point_predictions)
 
     def as_sitk(self) -> sitk.Image:
         raise NotImplementedError
@@ -106,6 +192,20 @@ class Shape(tio.data.Image):
 
     def to_gif(self, *args: Any, **kwargs: Any) -> Any:
         raise NotImplementedError
+
+    @property
+    def point_descriptions(self) -> Optional[Tuple[str, ...]]:
+        return self[POINT_DESCRIPTIONS]
+
+    @point_descriptions.setter
+    def point_descriptions(self, point_descriptions: Optional[Tuple[str, ...]]) -> None:
+        if point_descriptions is not None and len(point_descriptions) != self.tensor.size(0):
+            raise ValueError(
+                f"Number of point predictions ({len(point_descriptions)}) "
+                f"does not match number of points ({self.tensor.size(0)})"
+            )
+
+        self[POINT_DESCRIPTIONS] = point_descriptions
 
     @property
     def shape(self) -> Tuple[int, ...]:

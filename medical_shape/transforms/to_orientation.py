@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import torchio as tio
 from rising.utils.affine import points_to_cartesian, points_to_homogeneous
+
 from medical_shape.shape import Shape
 from medical_shape.transforms.mixin import TransformShapeValidationMixin
 

@@ -80,10 +80,12 @@ def mjson_importer(
         affine = torch.tensor(affine)
     affine = affine.to(points)
 
+    descriptions = content.get("descriptions", None)
+
     if flip_coordinate_order:
         points = torch.flip(affine, (-1,))
         affine = matrix_revert_coordinate_order(affine[None])[0]
-    return points, affine
+    return points, affine, descriptions
 
 
 def point_reader(path: TypePath, **kwargs: Any):
@@ -91,12 +93,13 @@ def point_reader(path: TypePath, **kwargs: Any):
     if path.endswith(".pts"):
         points = pts_importer(path, flip_coordinate_order=False, **kwargs)
         affine = torch.eye(4).to(points)
+        descriptions = None
     elif path.endswith(".mjson"):
-        points, affine = mjson_importer(path, flip_coordinate_order=False, **kwargs)
+        points, affine, descriptions = mjson_importer(path, flip_coordinate_order=False, **kwargs)
 
     else:
         raise ValueError(
             f"Could not find file with extension {path.rsplit('.')[1]}. Supported extensions are .pts and .mpts"
         )
 
-    return points, affine
+    return points, affine, descriptions

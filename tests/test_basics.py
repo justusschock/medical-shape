@@ -17,10 +17,10 @@ def clear_warning_caches():
     cache_transform.clear()
 
 
-def save(subject: ShapeSupportSubject, path):
+def save(subject: ShapeSupportSubject, path, shape_extension: str):
     for k, v in subject.items():
         if isinstance(v, Shape):
-            v.save(os.path.join(path, f"{k}.pts"))
+            v.save(os.path.join(path, f"{k}{shape_extension}"))
         elif isinstance(v, tio.data.Image):
             v.save(os.path.join(path, f"{k}.nii.gz"))
 
@@ -36,10 +36,17 @@ def create_subject():
     return subject
 
 
-def test_io(tmpdir):
+@pytest.mark.parametrize(
+    "shape_extension",
+    [
+        ".pts",
+        ".mjson",
+    ],
+)
+def test_io(tmpdir, shape_extension):
     subject = create_subject()
-    save(subject, tmpdir)
-    Shape(os.path.join(tmpdir, "s.pts"))
+    save(subject, tmpdir, shape_extension)
+    Shape(os.path.join(tmpdir, f"s{shape_extension}"))
 
 
 @pytest.mark.parametrize(
@@ -62,4 +69,3 @@ def test_transforms(trafo):
     assert not isinstance(transformed_subject, ShapeSupportSubject) and isinstance(
         transformed_subject, tio.data.Subject
     )
-
