@@ -178,7 +178,7 @@ class Shape(tio.data.Image):
     def save(self, path: TypePath, squeeze: Optional[bool] = None) -> None:
         if squeeze:
             raise ValueError("Squeezing is not supported for shapes")
-        point_writer(path, self.tensor, self.affine, self.point_predictions)
+        point_writer(path, self.tensor, self.affine, self.point_descriptions)
 
     def as_sitk(self) -> sitk.Image:
         raise NotImplementedError
