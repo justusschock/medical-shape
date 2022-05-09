@@ -215,7 +215,7 @@ class Shape(tio.data.Image):
             except ValueError:
                 raise ValueError(f'{desc} not in point_descriptions. Valid options are {self.point_descriptions}!')
         
-            points.append(self[DATA][index]])
+            points.append(self[DATA][index])
 
         return torch.stack(points)
 
