@@ -207,6 +207,18 @@ class Shape(tio.data.Image):
 
         self[POINT_DESCRIPTIONS] = point_descriptions
 
+    def get_points_by_description(self, *point_descriptions: str) -> torch.Tensor:
+        points = []
+        for desc in point_descriptions:
+            try:
+                index = self.point_descriptions.index(desc)
+            except ValueError:
+                raise ValueError(f'{desc} not in point_descriptions. Valid options are {self.point_descriptions}!')
+        
+            points.append(self[DATA][index]])
+
+        return torch.stack(points)
+
     @property
     def shape(self) -> Tuple[int, ...]:
         return (1, *self.spatial_shape)
