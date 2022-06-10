@@ -1,4 +1,5 @@
 # Medical Shape
+[![UnitTest](https://github.com/justusschock/medical-shape/actions/workflows/unittest.yaml/badge.svg)](https://github.com/justusschock/medical-shape/actions/workflows/unittest.yaml) [![Docker](https://github.com/justusschock/medical-shape/actions/workflows/docker_build.yaml/badge.svg)](https://github.com/justusschock/medical-shape/actions/workflows/docker_build.yaml) [![Docker Stable](https://github.com/justusschock/medical-shape/actions/workflows/docker_stable.yaml/badge.svg)](https://github.com/justusschock/medical-shape/actions/workflows/docker_stable.yaml) [![Build Package](https://github.com/justusschock/medical-shape/actions/workflows/package_build.yaml/badge.svg)](https://github.com/justusschock/medical-shape/actions/workflows/package_build.yaml) ![PyPI](https://img.shields.io/pypi/v/medical-shape)
 
 A [`torchio`](https://github.com/fepegar/torchio) extension for shapes and their processing.
 
