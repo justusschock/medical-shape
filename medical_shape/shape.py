@@ -121,8 +121,8 @@ class Shape(tio.data.Image):
         self.affine = affine
         self._loaded = True
 
-    def set_data(self, tensor: TypeData) -> None:
-        if POINT_DESCRIPTIONS in self and self[POINT_DESCRIPTIONS] is not None:
+    def set_data(self, tensor: TypeData, check_description_length: bool = True) -> None:
+        if check_description_length and POINT_DESCRIPTIONS in self and self[POINT_DESCRIPTIONS] is not None:
             if len(self[POINT_DESCRIPTIONS]) != tensor.size(0):
                 raise ValueError(
                     f"Number of point descriptions ({len(self[POINT_DESCRIPTIONS])}) "

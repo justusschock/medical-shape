@@ -1,13 +1,25 @@
 name: Build Package
 on:
-  push
+  push:
+    branches:
+      - 'master'
+      - 'main'
+  release:
+    types:
+      - created
+  pull_request:
+    branches:
+      - 'master'
+      - 'main'
 
 jobs:
   publish-test:
-    name: Test Package Build
+    name: Test Package Build and Install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - name: Set up Python 3.7
         uses: actions/setup-python@v1
         with:
@@ -18,15 +30,26 @@ jobs:
           python -m
           pip install
           build
+          twine
           --user
+
       - name: Build a binary wheel and a source tarball
         run: >-
           python -m
           build
-          --sdist
-          --wheel
           --outdir dist/
+          
+      - name: Twine PyPi checks
+        run: twine check dist/*
 
-      - name: Run Pacakge install
-        run: >-
-          pip install .
+      - name: Install Package Wheel
+        run: pip install ./dist/*.whl
+
+      - name: Import Package
+        run: python -c "import medical_shape; print(medical_shape.__version__)"
+
+      - name: Install Package Sdist
+        run: pip install ./dist/*.tar.gz --force-reinstall
+
+      - name: Import Package
+        run: python -c "import medical_shape; print(medical_shape.__version__)"
