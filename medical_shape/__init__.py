@@ -1,4 +1,4 @@
-__version__ = "0.0.6"
+__version__ = "0.1.0"
 
 from medical_shape.shape import Shape
 from medical_shape.subject import ShapeSupportSubject
