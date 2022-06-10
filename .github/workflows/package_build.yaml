@@ -38,7 +38,7 @@ jobs:
           python -m
           build
           --outdir dist/
-          
+
       - name: Twine PyPi checks
         run: twine check dist/*
 

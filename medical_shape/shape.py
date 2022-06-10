@@ -209,12 +209,16 @@ class Shape(tio.data.Image):
 
     def get_points_by_description(self, *point_descriptions: str) -> torch.Tensor:
         points = []
+
+        if self.point_descriptions is None:
+            raise ValueError("No point descriptions found!")
+
         for desc in point_descriptions:
             try:
                 index = self.point_descriptions.index(desc)
             except ValueError:
-                raise ValueError(f'{desc} not in point_descriptions. Valid options are {self.point_descriptions}!')
-        
+                raise ValueError(f"{desc} not in point_descriptions. Valid options are {self.point_descriptions}!")
+
             points.append(self.tensor[index])
 
         return torch.stack(points)

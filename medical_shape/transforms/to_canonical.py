@@ -5,7 +5,7 @@ import nibabel as nib
 import numpy as np
 import torch
 import torchio as tio
-from rising.utils.affine import matrix_revert_coordinate_order, points_to_cartesian, points_to_homogeneous
+from rising.utils.affine import points_to_cartesian, points_to_homogeneous
 
 from medical_shape.shape import Shape
 from medical_shape.subject import ShapeSupportSubject
