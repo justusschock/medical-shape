@@ -74,4 +74,4 @@ jobs:
         run: |
             docker run --rm ${{ github.repository }}:latest-${{ matrix.accelerator }} python -c "import mdlu; print(mdlu.__version__)"
 
-     
+
