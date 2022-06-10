@@ -73,5 +73,3 @@ jobs:
       - name: Test Image
         run: |
             docker run --rm ${{ github.repository }}:latest-${{ matrix.accelerator }} python -c "import mdlu; print(mdlu.__version__)"
-
-
