@@ -42,4 +42,4 @@ You can also install the package directly from GitHub by running
 
 We provide a docker image for easy usage of the package and as a base image for other projects.
 
-The file for this image can be found at dockers/Dockerfile. We provide both, a CPU-only and a CUDA-enabled image based on the NVIDIA NGC PyTorch image. These images can be found on DockerHub.
+The file for this image can be found at dockers/Dockerfile. We provide both, a CPU-only and a CUDA-enabled image based on the NVIDIA NGC PyTorch image. These images can be found on [DockerHub](https://hub.docker.com/repository/docker/justusschock/medical-shape).
