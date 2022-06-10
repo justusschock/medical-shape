@@ -18,10 +18,10 @@ classifiers = [
 ]
 
 dependencies = [
-    "torch >= 1.7.*, <=1.11",
-    "rising >= 0.2.1, <= 0.2.2",
-    "torchio >= 0.18.71, <=0.18.78",
-    "medical-dl-utils >= 0.1.5< , <=0.1.6"
+    "torch >= 1.7.*, <1.12",
+    "rising >= 0.2.1, < 0.2.3",
+    "torchio >= 0.18.71, <0.18.79",
+    "medical-dl-utils >= 0.1.5< , <0.1.7"
 ]
 
 [project.optional-dependencies]
