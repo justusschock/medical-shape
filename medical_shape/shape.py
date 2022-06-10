@@ -213,8 +213,8 @@ class Shape(tio.data.Image):
             try:
                 index = self.point_descriptions.index(desc)
             except ValueError:
-                raise ValueError(f'{desc} not in point_descriptions. Valid options are {self.point_descriptions}!')
-        
+                raise ValueError(f"{desc} not in point_descriptions. Valid options are {self.point_descriptions}!")
+
             points.append(self.tensor[index])
 
         return torch.stack(points)
