@@ -3,7 +3,9 @@ import torch
 import torchio as tio
 from rising.utils.affine import points_to_cartesian, points_to_homogeneous
 import nibabel as nib
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Union
+from copy import deepcopy
+from medical_shape.subject import ShapeSupportSubject
 
 from medical_shape.shape import Shape
 from medical_shape.transforms.mixin import TransformShapeValidationMixin
