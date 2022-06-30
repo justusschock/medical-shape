@@ -1,22 +1,31 @@
+from copy import deepcopy
+from typing import Dict, Optional, Sequence, Tuple, Union
+
+import nibabel as nib
 import numpy as np
 import torch
 import torchio as tio
 from rising.utils.affine import points_to_cartesian, points_to_homogeneous
-import nibabel as nib
-from typing import Optional, Sequence, Union, Dict, Tuple
-from copy import deepcopy
-from medical_shape.subject import ShapeSupportSubject
 
 from medical_shape.shape import Shape
+from medical_shape.subject import ShapeSupportSubject
 from medical_shape.transforms.mixin import TransformShapeValidationMixin
 
+
 class ToOrientation(TransformShapeValidationMixin):
-    def __init__(self, axcode: Optional[Sequence[str]] = None, affine: Optional[np.ndarray] = None, shape_trafo_image_size: Optional[Tuple[int, int, int]] = None, shape_trafo_image_key: Optional[str] = None, **kwargs):
+    def __init__(
+        self,
+        axcode: Optional[Sequence[str]] = None,
+        affine: Optional[np.ndarray] = None,
+        shape_trafo_image_size: Optional[Tuple[int, int, int]] = None,
+        shape_trafo_image_key: Optional[str] = None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
 
         if axcode is None and affine is None:
             raise ValueError("Either affine or axcode have to be specified!")
-        
+
         if axcode is not None and affine is not None:
             raise ValueError("Cannot specify both affine and axcode!")
 
@@ -24,7 +33,7 @@ class ToOrientation(TransformShapeValidationMixin):
             axcode = nib.orientations.aff2axcodes(affine)
 
         self.dst_ornt = nib.orientations.axcodes2ornt(axcode)
-        
+
         if shape_trafo_image_size is not None and shape_trafo_image_key is not None:
             raise ValueError("Cannot specify both shape_trafo_image_size and shape_trafo_image_key!")
         self.shape_trafo_image_size = deepcopy(shape_trafo_image_size)
@@ -42,8 +51,10 @@ class ToOrientation(TransformShapeValidationMixin):
             elif len(ShapeSupportSubject.exclude_shapes(subject.get_images_dict(intensity_only=False))) == 1:
                 shape_trafo_image_size = deepcopy(subject.get_first_image().spatial_shape)
             else:
-                raise ValueError('Either a shape_trafo_image_size or a shape_trafo_image_key '
-                    'has to be specified or the subject should only contain a single Image.')
+                raise ValueError(
+                    "Either a shape_trafo_image_size or a shape_trafo_image_key "
+                    "has to be specified or the subject should only contain a single Image."
+                )
 
         for k, v in subject.get_images_dict(intensity_only=False).items():
             src_ornt = nib.orientations.axcodes2ornt(nib.orientations.aff2axcodes(v.affine))
