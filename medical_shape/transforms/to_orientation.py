@@ -11,7 +11,7 @@ from medical_shape.shape import Shape
 from medical_shape.transforms.mixin import TransformShapeValidationMixin
 
 class ToOrientation(TransformShapeValidationMixin):
-    def __init__(self, axcode: Optional[Sequence[str]] = None, affine: Optional[np.ndarray] = None, shape_trafo_image_size: Optional[Union[Tuple[int, ...], List[int]] = None, shape_trafo_image_key: Optional[str] = None, **kwargs):
+    def __init__(self, axcode: Optional[Sequence[str]] = None, affine: Optional[np.ndarray] = None, shape_trafo_image_size: Optional[Union[Tuple[int, ...], List[int]]] = None, shape_trafo_image_key: Optional[str] = None, **kwargs):
         super().__init__(**kwargs)
 
         if axcode is None and affine is None:
