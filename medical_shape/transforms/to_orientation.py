@@ -60,7 +60,7 @@ class ToOrientation(TransformShapeValidationMixin):
             src_ornt = nib.orientations.axcodes2ornt(nib.orientations.aff2axcodes(v.affine))
             if np.allclose(src_ornt, self.dst_ornt):
                 continue
-                
+
             ornt_trafo = nib.orientations.ornt_transform(src_ornt, self.dst_ornt)
 
             if isinstance(v, Shape):
