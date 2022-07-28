@@ -8,7 +8,7 @@ import pytest
 import torch
 import torchio as tio
 
-from medical_shape.shape import POINT_DESCRIPTIONS, Shape, SHAPE
+from medical_shape.shape import POINT_DESCRIPTIONS, Shape
 
 
 def test_shape_init_tensor_only():
@@ -62,7 +62,7 @@ def test_shape_init_mjson_file(affine, descriptions, data_path):
         assert np.allclose(shape.affine, np.eye(4))
 
     if descriptions:
-        assert shape.point_descriptions == tuple([f"Loaded Point {i:02d}" for i in range(shape.tensor.size(0))])
+        assert shape.point_descriptions == tuple(f"Loaded Point {i:02d}" for i in range(shape.tensor.size(0)))
     else:
         assert shape.point_descriptions == None
 
@@ -395,10 +395,10 @@ def test_save(file_name, data_path, tmpdir):
     assert torch.allclose(original_shape.tensor, reloaded_shape.tensor)
     assert original_shape.point_descriptions == reloaded_shape.point_descriptions
 
-    with open(full_file_name, "r") as f:
+    with open(full_file_name) as f:
         original_content = f.read()
 
-    with open(full_output_name, "r") as f:
+    with open(full_output_name) as f:
         saved_content = f.read()
 
     assert original_content == saved_content
