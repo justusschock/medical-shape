@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import Dict, Optional, Sequence, Tuple, Union
+from typing import Dict, Iterable, Optional, Sequence, Tuple, Union
 
 import nibabel as nib
 import numpy as np
@@ -57,37 +57,82 @@ class ToOrientation(TransformShapeValidationMixin):
                 )
 
         for k, v in subject.get_images_dict(intensity_only=False).items():
-            src_ornt = nib.orientations.axcodes2ornt(nib.orientations.aff2axcodes(v.affine))
-            if np.allclose(src_ornt, self.dst_ornt):
-                continue
-
-            ornt_trafo = nib.orientations.ornt_transform(src_ornt, self.dst_ornt)
 
             if isinstance(v, Shape):
-                trafo_affine = nib.orientations.inv_ornt_aff(ornt_trafo, shape_trafo_image_size)
-
-                hom_points = points_to_homogeneous(v.tensor[None])[0].numpy()
-                points_transformed = (trafo_affine @ hom_points.T).T
-
-                points_transformed = points_to_cartesian(torch.from_numpy(np.array(points_transformed))[None])[0]
-
-                v.set_data(points_transformed.to(v.tensor))
-                v.affine = v.affine.dot(trafo_affine)
+                v = shape_to_orientation_v2(v, dst_ornt=self.dst_ornt, image_size=shape_trafo_image_size)
             else:
-                # adapted from https://github.com/fepegar/torchio/blob/main/src/torchio/transforms/preprocessing/spatial/to_canonical.py
-                array = v.numpy()[np.newaxis]  # (1, C, W, H, D)
-                # NIfTI images should have channels in 5th dimension
-                array = array.transpose(2, 3, 4, 0, 1)  # (W, H, D, 1, C)
-                nii = nib.Nifti1Image(array, v.affine)
-                reoriented = nii.as_reoriented(ornt_trafo)
-                # https://nipy.org/nibabel/reference/nibabel.dataobj_images.html#nibabel.dataobj_images.DataobjImage.get_data
-                array = np.asanyarray(reoriented.dataobj)
-                # https://github.com/facebookresearch/InferSent/issues/99#issuecomment-446175325
-                array = array.copy()
-                array = array.transpose(3, 4, 0, 1, 2)  # (1, C, W, H, D)
-                v.set_data(torch.as_tensor(array[0]))
-                v.affine = reoriented.affine
+                v = image_to_orientation(v, dst_ornt=self.dst_ornt)
 
             subject[k] = v
 
         return subject
+
+
+def image_to_orientation(image: tio.Image, dst_ornt: np.ndarray):
+    src_ornt = nib.orientations.axcodes2ornt(nib.orientations.aff2axcodes(image.affine))
+
+    if np.allclose(src_ornt, dst_ornt):
+        return image
+
+    ornt_trafo = nib.orientations.ornt_transform(src_ornt, dst_ornt)
+
+    # adapted from https://github.com/fepegar/torchio/blob/main/src/torchio/transforms/preprocessing/spatial/to_canonical.py
+    array = image.numpy()[np.newaxis]  # (1, C, W, H, D)
+    # NIfTI images should have channels in 5th dimension
+    array = array.transpose(2, 3, 4, 0, 1)  # (W, H, D, 1, C)
+    nii = nib.Nifti1Image(array, image.affine)
+    reoriented = nii.as_reoriented(ornt_trafo)
+    # https://nipy.org/nibabel/reference/nibabel.dataobj_images.html#nibabel.dataobj_images.DataobjImage.get_data
+    array = np.asanyarray(reoriented.dataobj)
+    # https://github.com/facebookresearch/InferSent/issues/99#issuecomment-446175325
+    array = array.copy()
+    array = array.transpose(3, 4, 0, 1, 2)  # (1, C, W, H, D)
+    image.set_data(torch.as_tensor(array[0]))
+    image.affine = reoriented.affine
+    return image
+
+
+def _shape_to_orientation_v1(shape: Shape, dst_ornt: np.ndarray, image_size: Iterable[int]):
+    # TODO: Find out, why this isn't working
+
+    src_ornt = nib.orientations.axcodes2ornt(nib.orientations.aff2axcodes(shape.affine))
+
+    if np.allclose(src_ornt, dst_ornt):
+        return shape
+
+    ornt_trafo = nib.orientations.ornt_transform(src_ornt, dst_ornt)
+
+    trafo_affine = nib.orientations.inv_ornt_aff(ornt_trafo, image_size)
+
+    hom_points = points_to_homogeneous(shape.tensor[None])[0].numpy()
+    points_transformed = (trafo_affine @ hom_points.T).T
+
+    points_transformed = points_to_cartesian(torch.from_numpy(np.array(points_transformed))[None])[0]
+
+    shape.set_data(points_transformed.to(shape.tensor))
+    shape.affine = shape.affine.dot(trafo_affine)
+    return shape
+
+
+def shape_to_orientation_v2(shape: Shape, dst_ornt: np.ndarray, image_size: Iterable[int]):
+
+    src_ornt = nib.orientations.axcodes2ornt(nib.orientations.aff2axcodes(shape.affine))
+
+    if np.allclose(src_ornt, dst_ornt):
+        return shape
+
+    tmp_image = tio.data.LabelMap(
+        tensor=torch.zeros(1, *image_size, device=shape.tensor.device, dtype=torch.long), affine=shape.affine
+    )
+
+    for idx, pt in enumerate(shape.tensor.long()):
+        tmp_image.tensor[0, pt[0], pt[1], pt[2]] = idx + 1
+
+    src_ornt = nib.orientations.axcodes2ornt(nib.orientations.aff2axcodes(shape.affine))
+    tmp_image_oriented = image_to_orientation(tmp_image, dst_ornt)
+    shape.affine = tmp_image_oriented.affine
+
+    for idx, pt in enumerate(shape.tensor):
+        shape.tensor[idx] = (tmp_image_oriented.tensor == idx + 1).nonzero()[0, 1:]
+
+    return shape
