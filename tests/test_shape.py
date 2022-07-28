@@ -400,11 +400,11 @@ def test_save(file_name, data_path, tmpdir):
 
     with open(full_output_name) as f:
         saved_content = f.read()
-        
+
     # ignore newline at the end for diff
-    if original_content.endswith('\n') and not saved_content.endswith('\n'):
+    if original_content.endswith("\n") and not saved_content.endswith("\n"):
         saved_content += "\n"
-        
+
     if saved_content.endswith("\n") and not original_content.endswith("\n"):
         original_content += "\n"
 
