@@ -1,4 +1,5 @@
 import warnings
+from copy import deepcopy
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 import nibabel as nib
@@ -13,7 +14,7 @@ from torchio.typing import TypeData, TypePath
 from medical_shape.io import point_reader, point_writer
 
 SHAPE = "shape"
-POINT_DESCRIPTIONS = "point_descriptions"
+POINT_DESCRIPTIONS = "_point_descriptions"
 
 
 class Shape(tio.data.Image):
@@ -41,13 +42,15 @@ class Shape(tio.data.Image):
             **kwargs,
         )
 
-        self[POINT_DESCRIPTIONS] = point_descriptions
+        if tensor is not None:
+            # only add if actual shape is present, otherwise it's safe to assume that this will be loaded at some point
+            self[POINT_DESCRIPTIONS] = self._parse_point_descriptions(point_descriptions)
 
-    def __getitem__(self, item):
-        if item in (tio.data.image.DATA, tio.data.image.AFFINE, POINT_DESCRIPTIONS):
-            if item not in self:
-                self.load()
-        return super().__getitem__(item)
+    def __repr__(self):
+        if self._loaded:
+            return super().__repr__()
+        else:
+            return f"{self.__class__.__name__}(path: {self.path})"
 
     def __copy__(self):
         kwargs = {
@@ -60,8 +63,23 @@ class Shape(tio.data.Image):
         for key, value in self.items():
             if key in (*tio.data.image.PROTECTED_KEYS, POINT_DESCRIPTIONS):
                 continue
-            kwargs[key] = value  # should I copy? deepcopy?
-        return self.__class__(**kwargs)
+            kwargs[key] = value
+        return type(self)(**kwargs)
+
+    def __deepcopy__(self, memo):
+        kwargs = {
+            "tensor": self.data,
+            "affine": self.affine,
+            "type": self.type,
+            "path": self.path,
+            "point_descriptions": self.point_descriptions,
+        }
+        for key, value in self.items():
+            if key in (*tio.data.image.PROTECTED_KEYS, POINT_DESCRIPTIONS):
+                continue
+            kwargs[key] = value
+
+        return type(self)(**deepcopy(kwargs, memo=memo))
 
     def read_and_check(self, path: TypePath) -> Tuple[torch.Tensor, np.ndarray, Union[None, Sequence[str]]]:
         tensor, affine, point_descriptions = self.reader(path)
@@ -69,6 +87,7 @@ class Shape(tio.data.Image):
         tensor = self._parse_tensor_shape(tensor)
         tensor = self._parse_tensor(tensor)
         affine = self._parse_affine(affine)
+        point_descriptions = self._parse_point_descriptions(point_descriptions)
         if self.check_nans and torch.isnan(tensor).any():
             warnings.warn(f'NaNs found in file "{path}"', RuntimeWarning)
         return tensor, affine, point_descriptions
@@ -115,12 +134,24 @@ class Shape(tio.data.Image):
                 all_point_descriptions = tuple(descriptions)
             else:
                 raise TypeError(f"Point descriptions must be iterable or None, not {type(descriptions)}")
+
         tensor = torch.cat(tensors)
 
-        self[POINT_DESCRIPTIONS] = all_point_descriptions
+        self[POINT_DESCRIPTIONS] = self._parse_point_descriptions(all_point_descriptions)
         self.set_data(tensor)
         self.affine = affine
         self._loaded = True
+
+    @property
+    def affine(self) -> np.ndarray:
+        if not self._loaded:
+            self.load()
+
+        return self[tio.constants.AFFINE]
+
+    @affine.setter
+    def affine(self, value: np.ndarray):
+        self[tio.constants.AFFINE] = self._parse_affine(value)
 
     def set_data(self, tensor: TypeData, check_description_length: bool = True) -> None:
         if check_description_length and POINT_DESCRIPTIONS in self and self[POINT_DESCRIPTIONS] is not None:
@@ -130,7 +161,7 @@ class Shape(tio.data.Image):
                     f"does not match number of points ({tensor.size(0)})"
                 )
 
-        return super().set_data(tensor)
+        return super().set_data(tensor.float())
 
     def _parse_affine(self, affine: Optional[Union[np.ndarray, torch.Tensor]]) -> np.ndarray:
         if affine is None:
@@ -143,7 +174,7 @@ class Shape(tio.data.Image):
         if affine.shape != (4, 4):
             bad_shape = affine.shape
             raise ValueError(f"Affine shape must be (4, 4), not {bad_shape}")
-        return affine.astype(np.float64)
+        return affine.astype(np.float64, copy=False)
 
     def _parse_tensor(self, tensor: Optional[TypeData], none_ok: bool = True) -> Optional[torch.Tensor]:
 
@@ -156,7 +187,7 @@ class Shape(tio.data.Image):
             tensor = tio.data.io.check_uint_to_int(tensor)
             tensor = torch.as_tensor(tensor)
         elif not isinstance(tensor, torch.Tensor):
-            message = "Input tensor must be a PyTorch tensor or NumPy array," f' but type "{type(tensor)}" was found'
+            message = "Input tensor must be a PyTorch tensor or NumPy array," f" but type {type(tensor)} was found"
             raise TypeError(message)
         ndim = tensor.ndim
         if ndim != 2:
@@ -175,6 +206,13 @@ class Shape(tio.data.Image):
     @staticmethod
     def _parse_tensor_shape(tensor: torch.Tensor) -> TypeData:
         return ensure_3d_points(tensor)
+
+    @staticmethod
+    def _parse_point_descriptions(point_descriptions: Optional[Iterable]):
+        if point_descriptions is not None:
+            point_descriptions = tuple(point_descriptions)
+
+        return point_descriptions
 
     def save(self, path: TypePath, squeeze: Optional[bool] = None) -> None:
         if squeeze:
@@ -196,6 +234,8 @@ class Shape(tio.data.Image):
 
     @property
     def point_descriptions(self) -> Optional[Tuple[str, ...]]:
+        if not self._loaded:
+            self.load()
         return self[POINT_DESCRIPTIONS]
 
     @point_descriptions.setter
@@ -206,7 +246,7 @@ class Shape(tio.data.Image):
                 f"does not match number of points ({self.tensor.size(0)})"
             )
 
-        self[POINT_DESCRIPTIONS] = point_descriptions
+        self[POINT_DESCRIPTIONS] = self._parse_point_descriptions(point_descriptions)
 
     def get_points_by_description(self, *point_descriptions: str) -> torch.Tensor:
         points = []
@@ -218,19 +258,21 @@ class Shape(tio.data.Image):
             try:
                 index = self.point_descriptions.index(desc)
             except ValueError:
-                raise ValueError(f"{desc} not in point_descriptions. Valid options are {self.point_descriptions}!")
+                possibilities = tuple(["'" + x + "'" for x in self.point_descriptions])
+                raise ValueError(f"'{desc}' not in point_descriptions. Valid options are {possibilities}!")
 
             points.append(self.tensor[index])
 
         return torch.stack(points)
 
     def to_physical_space(self):
-        affine = shape.affine
-        hom_pts = points_to_homogeneous(shape.tensor[None].float())
+
+        affine = self.affine
+        hom_pts = points_to_homogeneous(self.tensor[None])
         points_mm = points_to_cartesian(
             affine_point_transform(hom_pts, torch.tensor(affine[None], device=hom_pts.device, dtype=hom_pts.dtype))
         )[0]
-        return Shape(tensor=points_mm, affine=np.eye(4), point_descriptions=shape.point_descriptions)
+        return Shape(tensor=points_mm, affine=np.eye(4), point_descriptions=self.point_descriptions)
 
     @property
     def shape(self) -> Tuple[int, ...]:

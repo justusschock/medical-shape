@@ -62,9 +62,11 @@ def pts_exporter(
 
     if flip_coordinate_order:
         if pts.shape[-1] == 2:
-            pts = pts[:, [1, 0]] + 1
+            pts = pts[:, [1, 0]]
         else:
-            pts = pts[:, [2, 1, 0]] + 1
+            pts = pts[:, [2, 1, 0]]
+
+    pts = pts + 1
 
     if isinstance(pts, torch.Tensor):
         pts = pts.detach().cpu().numpy()
