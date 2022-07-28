@@ -6,7 +6,7 @@ import torchio as tio
 
 from medical_shape.shape import Shape
 from medical_shape.subject import ShapeSupportSubject
-from medical_shape.transforms import Crop, CropOrPad, Pad, Resample, ToCanonical
+from medical_shape.transforms import Resample, ToCanonical
 
 
 def clear_warning_caches():
@@ -53,9 +53,6 @@ def test_io(tmpdir, shape_extension):
     "trafo",
     [
         tio.transforms.CopyAffine("i", parse_input=False),
-        Crop((2, 2, 2, 2, 2, 2)),
-        Pad((2, 2, 2, 2, 2, 2)),
-        CropOrPad((155, 384, 390)),
         ToCanonical(),
         Resample([2, 1, 1], parse_input=False),
     ],
