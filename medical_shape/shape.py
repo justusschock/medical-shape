@@ -258,7 +258,7 @@ class Shape(tio.data.Image):
             try:
                 index = self.point_descriptions.index(desc)
             except ValueError:
-                possibilities = tuple(["'" + x + "'" for x in self.point_descriptions])
+                possibilities = tuple("'" + x + "'" for x in self.point_descriptions)
                 raise ValueError(f"'{desc}' not in point_descriptions. Valid options are {possibilities}!")
 
             points.append(self.tensor[index])
@@ -266,6 +266,7 @@ class Shape(tio.data.Image):
         return torch.stack(points)
 
     def to_physical_space(self):
+
         affine = self.affine
         hom_pts = points_to_homogeneous(self.tensor[None])
         points_mm = points_to_cartesian(
