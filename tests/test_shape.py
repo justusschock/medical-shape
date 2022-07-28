@@ -44,7 +44,7 @@ def test_shape_init_mjson_file(affine, descriptions, data_path):
     else:
         file_name += "without_affine"
 
-    file_name += ""
+    file_name += "_"
 
     if descriptions:
         file_name += "with_descriptions"
@@ -400,6 +400,13 @@ def test_save(file_name, data_path, tmpdir):
 
     with open(full_output_name) as f:
         saved_content = f.read()
+        
+    # ignore newline at the end for diff
+    if original_content.endswith('\n') and not saved_content.endswith('\n'):
+        saved_content += "\n"
+        
+    if saved_content.endswith("\n") and not original_content.endswith("\n"):
+        original_content += "\n"
 
     assert original_content == saved_content
 
