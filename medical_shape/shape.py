@@ -258,7 +258,7 @@ class Shape(tio.data.Image):
             try:
                 index = self.point_descriptions.index(desc)
             except ValueError:
-                possibilities = tuple(["'" + x + "'" for x in self.point_descriptions])
+                possibilities = tuple("'" + x + "'" for x in self.point_descriptions)
                 raise ValueError(f"'{desc}' not in point_descriptions. Valid options are {possibilities}!")
 
             points.append(self.tensor[index])
