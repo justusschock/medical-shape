@@ -7,7 +7,7 @@ import pytest
 import torch
 import torchio as tio
 
-from medical_shape import Shape, ShapeSupportSubject
+from medical_shape import Shape
 from medical_shape.transforms.to_orientation import (
     _shape_to_orientation_v1,
     image_to_orientation,

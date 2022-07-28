@@ -6,8 +6,8 @@ import numpy as np
 import SimpleITK as sitk
 import torch
 import torchio as tio
-from rising.utils.affine import points_to_homogeneous,  points_to_cartesian
 from rising.transforms.functional.affine import affine_point_transform
+from rising.utils.affine import points_to_cartesian, points_to_homogeneous
 from torchio.typing import TypeData, TypePath
 
 from medical_shape.io import point_reader, point_writer
@@ -223,11 +223,13 @@ class Shape(tio.data.Image):
             points.append(self.tensor[index])
 
         return torch.stack(points)
-    
+
     def to_physical_space(self):
         affine = shape.affine
         hom_pts = points_to_homogeneous(shape.tensor[None].float())
-        points_mm = points_to_cartesian(affine_point_transform(hom_pts, torch.tensor(affine[None], device=hom_pts.device, dtype=hom_pts.dtype)))[0]
+        points_mm = points_to_cartesian(
+            affine_point_transform(hom_pts, torch.tensor(affine[None], device=hom_pts.device, dtype=hom_pts.dtype))
+        )[0]
         return Shape(tensor=points_mm, affine=np.eye(4), point_descriptions=shape.point_descriptions)
 
     @property
