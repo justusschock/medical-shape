@@ -18,9 +18,9 @@ classifiers = [
 ]
 
 dependencies = [
-    "torch >= 1.7.*"
+    "torch >= 1.7.*",
     "rising >= 0.2.1",
-    "torchio >= 0.18.71
+    "torchio >= 0.18.71"
 ]
 
 [project.urls]
