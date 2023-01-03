@@ -506,7 +506,6 @@ def test_get_points_by_description():
 
 
 def test_no_descriptions_get_points_by_description():
-
     shape = Shape(tensor=torch.randn(4, 3))
 
     with pytest.raises(ValueError, match="No point descriptions found!"):

@@ -94,6 +94,7 @@ class Shape(tio.data.Image):
 
     def load(self) -> None:
         r"""Load the image from disk.
+
         Returns:
             Tuple containing a 4D tensor of size :math:`(C, W, H, D)` and a 2D
             :math:`4 \times 4` affine matrix to convert voxel indices to world
@@ -177,7 +178,6 @@ class Shape(tio.data.Image):
         return affine.astype(np.float64, copy=False)
 
     def _parse_tensor(self, tensor: Optional[TypeData], none_ok: bool = True) -> Optional[torch.Tensor]:
-
         if tensor is None:
             if none_ok:
                 return None
@@ -266,7 +266,6 @@ class Shape(tio.data.Image):
         return torch.stack(points)
 
     def to_physical_space(self):
-
         affine = self.affine
         hom_pts = points_to_homogeneous(self.tensor[None])
         points_mm = points_to_cartesian(
