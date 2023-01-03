@@ -40,7 +40,6 @@ class ToOrientation(TransformShapeValidationMixin):
         self.shape_trafo_image_key = deepcopy(shape_trafo_image_key)
 
     def apply_transform(self, subject: tio.data.Subject) -> tio.data.Subject:
-
         shapes_dict: Union[Dict[str, Shape], Dict] = getattr(subject, "get_shapes_dict", lambda: {})()
         shape_trafo_image_size = (0, 0, 0)
         if shapes_dict:
@@ -115,7 +114,6 @@ def _shape_to_orientation_v1(shape: Shape, dst_ornt: np.ndarray, image_size: Ite
 
 
 def shape_to_orientation_v2(shape: Shape, dst_ornt: np.ndarray, image_size: Iterable[int]):
-
     src_ornt = nib.orientations.axcodes2ornt(nib.orientations.aff2axcodes(shape.affine))
 
     if np.allclose(src_ornt, dst_ornt):
